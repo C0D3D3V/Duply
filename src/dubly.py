@@ -241,10 +241,10 @@ def listDir(dirname):
    for f in fnames:
       path = os.path.join(dirname, f)
       if os.path.isdir(path):
-         log("Dir: " + f, 0)
+         log("Dir: " + f, 4)
 
       if os.path.isfile(path):
-         log("File: " + f, 0)      
+         log("File: " + f, 5)      
 
 
 
