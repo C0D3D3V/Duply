@@ -1,1 +1,1 @@
-# Automatic Dublicated scanner
+# Automatic duplicates annihilator

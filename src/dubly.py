@@ -355,18 +355,22 @@ log("Dubly started working.", 1)
 #4 = violet
 #5 = blau
 
+if not len(sys.argv) == 2:
+    log("Error parsing Variable. First Argument should be a path, in which I will annihilate all dublicates.", 3)
+    exit()
+    
 root_directory = str(sys.argv[1])
 
 
 #check variables:
 if not os.path.isdir(root_directory):
-    log("Error parsing Variable. First Argument should be a valid path.", 0)
+    log("Error parsing Variable. First Argument should be a valid path.", 3)
     exit()
     
 root_directory = os.path.abspath(root_directory)
 
 if not os.path.isdir(root_directory):
-    log("Error parsing Variable. Absolut Path should be valid too. Caluclated absulut path: " + root_directory, 0)
+    log("Error parsing Variable. Absolut Path should be valid too. Caluclated absulut path: " + root_directory, 3)
     exit()
    
 log("root_directory found file://" + root_directory, 0)
