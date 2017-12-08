@@ -128,6 +128,9 @@ def normPath(pathSring):
 def removeSpaces(pathString):
    return pathString.replace(" ", "")
 
+
+
+
 def checkBool(variable, name):
    if variable == "true" or variable == "false":
       return
@@ -179,32 +182,57 @@ def checkConf(cat, name):
 #Setup Dump Search    
 filesBySize = {}
 
+def isBadFolder(fnames, dirname):
+   for f in fnames:
+      path = os.path.join(dirname, f)
+      if os.path.isfile(path):
+         #skip file .project
+         if f == ".project":
+            log('Skip file://%s because there is a .project file in it!' % dirname, 0)
+            return True
+         
+      elif os.path.isdir(path):
+         #skip subfolder .idea
+         if f == ".idea":
+            log('Skip file://%s because there is a .idea folder in it!' % dirname, 0)
+            return True
+   return False
 
 
-def walker(arg, dirname, fnames):
-    d = os.getcwd()
-    os.chdir(dirname)
-    global filesBySize
+def walker(dirname):
+   fnames = os.listdir(dirname)
+   
+   if isBadFolder(fnames, dirname) == True:
+      return
 
-    try:
-        fnames.remove('Thumbs')
-    except ValueError:
-        pass
-    for f in fnames:
-        if not os.path.isfile(f):
-            continue
-        size = os.stat(f)[stat.ST_SIZE]
-        #print f + " size: " + str(size)
-        if size < 100:
-            continue
-        if filesBySize.has_key(size):
-            a = filesBySize[size]
-        else:
-            a = []
-            filesBySize[size] = a
-        a.append(os.path.join(dirname, f))
-    os.chdir(d)
 
+   global filesBySize
+   
+   try:
+      fnames.remove('Thumbs')
+   except ValueError:
+      pass
+   
+   for f in fnames:
+      path = os.path.join(dirname, f)
+      #walk in dir
+      if os.path.isdir(path):
+         walker(path)
+         continue
+   
+         
+      size = os.stat(path)[stat.ST_SIZE]
+      #print path + " size: " + str(size)
+      if size < 100:
+         continue
+      if filesBySize.has_key(size):
+         a = filesBySize[size]
+      else:
+         a = []
+         filesBySize[size] = a
+      a.append(path)
+
+   
 
 
 
@@ -231,8 +259,9 @@ def searchfordumps(pathtoSearch):
     global filesBySize
     filesBySize = {}
     log('Scanning directory file://%s ....' % pathtoSearch, 0)
-    os.path.walk(pathtoSearch, walker, filesBySize)
+    walker(pathtoSearch)
 
+    
     log('Finding potential duplicates...', 0)
     potentialDupes = []
     potentialCount = 0
@@ -246,7 +275,7 @@ def searchfordumps(pathtoSearch):
         if len(inFiles) is 1:
           continue
 
-        log('Testing %d files of size %d...' % (len(inFiles), k), 0)
+        #log('Testing %d files of size %d...' % (len(inFiles), k), 0)
         for fileName in inFiles:
             if not os.path.isfile(fileName):
                 continue
@@ -294,6 +323,8 @@ def searchfordumps(pathtoSearch):
         if len(outFiles):
             dupes.append(outFiles)
 
+            
+    log('You have to make now ' + str(len(dupes)) + " decisions. Have fun!", 1)
     for d in dupes:
        choice = getChoise(d)
        if choice < len(d) and choice > 0:
@@ -349,7 +380,7 @@ def getChoise(dupe):
    log("Which of the following files do you want to keep:", 4)
    
    for i, d in enumerate(dupe):
-     log("[" + str(i) + "] file://" + d + "", 5)
+     log("[" + str(i) + "] " + d + "", 5)
 
    log("[" + str(len(dupe)) + "] Skip", 5)
      
