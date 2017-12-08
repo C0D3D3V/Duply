@@ -233,6 +233,19 @@ def walker(dirname):
       a.append(path)
 
    
+def listDir(dirname):
+   fnames = os.listdir(dirname)
+   
+   
+   log("Listening of: " + dirname, 2)
+   for f in fnames:
+      path = os.path.join(dirname, f)
+      if os.path.isdir(path):
+         log("Dir: " + f, 0)
+
+      if os.path.isfile(path):
+         log("File: " + f, 0)      
+
 
 
 
@@ -325,9 +338,10 @@ def searchfordumps(pathtoSearch):
 
             
     log('You have to make now ' + str(len(dupes)) + " decisions. Have fun!", 1)
+    j = 0
     for d in dupes:
        choice = getChoise(d)
-       if choice < len(d) and choice > 0:
+       if choice < len(d) and choice >= 0:
           log('Your choice is %s' % "[" + str(choice) + "] file://" +d[choice] + " ", 1)
           
           logDuplicates(d, choice)
@@ -353,6 +367,8 @@ def searchfordumps(pathtoSearch):
           skipLogReader.close()
        elif choice == -1:
           log('Skip file://%s' % d[0], 0)
+       j += 1
+       log(str(j) + ' done of ' + str(len(dupes)), 1)
 
 
 #log Duplicates
@@ -383,11 +399,17 @@ def getChoise(dupe):
      log("[" + str(i) + "] " + d + "", 5)
 
    log("[" + str(len(dupe)) + "] Skip", 5)
+   log("[" + str(len(dupe) + 1) + "] List dir", 5)
      
    usr_input = '-1'
+   
    while int(usr_input) not in range(0, len(dupe) + 1):
       usr_input = input("Input: ")
+      if usr_input == len(dupe) + 1:
+         for f in dupe:
+            listDir(os.path.dirname(f))
 
+   
    return int(usr_input)
 
 
