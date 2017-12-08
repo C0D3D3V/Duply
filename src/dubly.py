@@ -296,28 +296,37 @@ def searchfordumps(pathtoSearch):
 
     for d in dupes:
        choice = getChoise(d)
-       
-       log('Your choise is %s' % "[" + str(choice) + "] file://" +d[choice] + " ", 1)
-       
-       logDuplicates(d, choice)
-       for i, f in enumerate(d):
-          if not i == choice:
-             log('Deleting file://%s' % f, 2)
-             os.remove(f)
-             try:
-                emptyDir = os.path.dirname(f)
-                os.rmdir(emptyDir)
-                log('Deleting empty dir file://%s' % emptyDir, 2)
-             except OSError:
-                empty = False
-
-
+       if choice < len(d) and choice > 0:
+          log('Your choice is %s' % "[" + str(choice) + "] file://" +d[choice] + " ", 1)
+          
+          logDuplicates(d, choice)
+          for i, f in enumerate(d):
+             if not i == choice:
+                log('Deleting file://%s' % f, 2)
+                os.remove(f)
+                try:
+                   emptyDir = os.path.dirname(f)
+                   os.rmdir(emptyDir)
+                   log('Deleting empty dir file://%s' % emptyDir, 2)
+                except OSError:
+                   empty = False
+       elif choice == len(d):
+          log('Skip file://%s' % d[0], 2)
+          skipLogWriter = open(skipLogPath, 'ab')
+          skipLogWriter.write(datetime.now().strftime('%d.%m.%Y %H:%M:%S') + " " + d[0] + "\n")
+          skipLogWriter.close()
+          
+          global skipLog
+          skipLogReader = open(skipLogPath, 'rb')
+          skipLog = skipLogReader.read()
+          skipLogReader.close()
+       elif choice == -1:
+          log('Skip file://%s' % d[0], 0)
 
 
 #log Duplicates
 def logDuplicates(dupe, choice):
    dubLogWriter = io.open(dubLogPath, 'ab')
-
    
    dubLogWriter.write(datetime.now().strftime('%d.%m.%Y %H:%M:%S') + "  Your choise was "+ str(choice) + " [ file://" + dupe[choice] + " ] I found that file on following places: ")
    
@@ -332,13 +341,20 @@ def logDuplicates(dupe, choice):
 
    
 def getChoise(dupe):
-   log("Make a decisson for the following files:", 4)
+   for f in dupe:
+      if f in skipLog:
+         return -1
+         
+   
+   log("Which of the following files do you want to keep:", 4)
    
    for i, d in enumerate(dupe):
      log("[" + str(i) + "] file://" + d + "", 5)
 
+   log("[" + str(len(dupe)) + "] Skip", 5)
+     
    usr_input = '-1'
-   while int(usr_input) not in range(0, len(dupe)):
+   while int(usr_input) not in range(0, len(dupe) + 1):
       usr_input = input("Input: ")
 
    return int(usr_input)
@@ -378,22 +394,39 @@ log("root_directory found file://" + root_directory, 0)
 
 
 dubLogPath = normPath(addSlashIfNeeded(root_directory)+ ".dublyhistory.log")
+skipLogPath = normPath(addSlashIfNeeded(root_directory)+ ".skiphistory.log")
 
 
- #create crealHistoryfile
+
+ #create logFile
 if not os.path.isfile(dubLogPath):
    dubLogWriter = open(dubLogPath, 'ab')
    dubLogWriter.write("LogFile:V1.0")
    dubLogWriter.close()
    log("Created history file: file://" + dubLogPath, 0)
 
-   
 log("Using history file: file://" + dubLogPath, 0)
-log('I will store information about all your decisions in the file://' + dubLogPath + ' file.', 4)
+
+ #create skipFile
+if not os.path.isfile(skipLogPath):
+   skipLogWriter = open(skipLogPath, 'ab')
+   skipLogWriter.write("SkipFile:V1.0")
+   skipLogWriter.close()
+   log("Created skip file: file://" + skipLogPath, 0)
+
+log("Using history file: file://" + skipLogPath, 0)
+   
+log('I will store information about all your decisions in the file://' + dubLogPath + ' and  file://' + skipLogPath + ' file.', 4)
+
 
 dubLogReader = open(dubLogPath, 'rb')
 dubLog = dubLogReader.read()
 dubLogReader.close()
+
+skipLogReader = open(skipLogPath, 'rb')
+skipLog = skipLogReader.read()
+skipLogReader.close()
+
 
 
 searchfordumps(normPath(root_directory))
