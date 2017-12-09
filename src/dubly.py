@@ -181,6 +181,7 @@ def checkConf(cat, name):
 
 #Setup Dump Search    
 filesBySize = {}
+dupes = []
 
 def isBadFolder(fnames, dirname):
    for f in fnames:
@@ -236,8 +237,7 @@ def walker(dirname):
 def listDir(dirname):
    fnames = os.listdir(dirname)
    
-   
-   log("Listening of: " + dirname, 2)
+
    for f in fnames:
       path = os.path.join(dirname, f)
       if os.path.isdir(path):
@@ -246,6 +246,12 @@ def listDir(dirname):
       if os.path.isfile(path):
          log("File: " + f, 5)      
 
+def listDirs(fnames):
+   for i, f in enumerate(fnames):
+      dirname = os.path.dirname(f)
+      log("[" + str(i) + "] " + dirname, 2) 
+      listDir(dirname)
+   
 
 
 
@@ -312,7 +318,8 @@ def searchfordumps(pathtoSearch):
     log('Found %d sets of potential duplicates...' % potentialCount, 0)
     log('Scanning for real duplicate...', 0)
 
-    dupes = []
+    global dupes
+    
     for aSet in potentialDupes:
         outFiles = []
         hashes = {}
@@ -336,6 +343,8 @@ def searchfordumps(pathtoSearch):
         if len(outFiles):
             dupes.append(outFiles)
 
+
+   
             
     log('You have to make now ' + str(len(dupes)) + " decisions. Have fun!", 1)
     j = 0
@@ -367,6 +376,10 @@ def searchfordumps(pathtoSearch):
           skipLogReader.close()
        elif choice == -1:
           log('Skip file://%s' % d[0], 0)
+       elif choice == -2:
+          #need to add folders to block list
+          block = True
+          
        j += 1
        log(str(j) + ' done of ' + str(len(dupes)), 1)
 
@@ -392,27 +405,80 @@ def getChoise(dupe):
       if f in skipLog:
          return -1
          
-   
-   log("Which of the following files do you want to keep:", 4)
-   
-   for i, d in enumerate(dupe):
-     log("[" + str(i) + "] " + d + "", 5)
-
-   log("[" + str(len(dupe)) + "] Skip", 5)
-   log("[" + str(len(dupe) + 1) + "] List dir", 5)
+   done = False
+   while done == False:
+      done = True
+      
      
-   usr_input = '-1'
-   
-   while int(usr_input) not in range(0, len(dupe) + 1):
-      usr_input = input("Input: ")
-      if usr_input == len(dupe) + 1:
-         for f in dupe:
-            listDir(os.path.dirname(f))
+      usr_input = '-1'
+         
+      while int(usr_input) not in range(0, len(dupe) + 1):
+         log("Which of the following files do you want to keep:", 4)
+      
+         for i, d in enumerate(dupe):
+            log("[" + str(i) + "] " + d + "", 5)
+      
+         log("[" + str(len(dupe)) + "] Skip", 5)
+         log("[" + str(len(dupe) + 1) + "] List Directoys", 5)
+         log("[" + str(len(dupe) + 2) + "] Directory Options", 5)
+      
+         usr_input = '-1'
 
+      
+         usr_input = input("Input: ")
+         if usr_input == len(dupe) + 1:
+            listDirs(dupe)
+      
+         elif usr_input == len(dupe) + 2:
+            wahl2 = getChoiseDir(dupe)
+            
+            if wahl2 == 1: #directory option correct
+               usr_input = -2
+               break
+            elif wahl2 == 0: #back to file option
+               done = False
+               break
    
    return int(usr_input)
 
 
+def getChoiseDir(dupe):
+   
+   
+   
+   usr_input = '-1'
+   
+   while int(usr_input) not in range(0, len(dupe)):
+      
+      log("Which of the following folders should be keeped:", 4)
+      for i, f in enumerate(dupe):
+         dirname = os.path.dirname(f)
+         log("[" + str(i) + "] " + dirname, 2)
+      
+
+      log("[" + str(len(dupe)) + "] List Directoys", 5)
+      log("[" + str(len(dupe) + 1) + "] Skip all Files", 5)
+      log("[" + str(len(dupe) + 2) + "] File Options", 5)
+   
+      usr_input = '-1'
+   
+      usr_input = input("Input: ")
+      
+      if usr_input == len(dupe):
+         listDirs(dupe)
+      
+      elif usr_input == len(dupe) + 1:
+         skip = True
+         #skip all files in selected folder
+         break
+      
+      elif usr_input == len(dupe) + 2:
+         return 0
+         
+   #keep all files in selected folder
+   #delete all files in other folders
+   
+   return 1
 
       
 log("Dubly started working.", 1)
