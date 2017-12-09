@@ -175,6 +175,9 @@ def checkConf(cat, name):
 
 
  
+def printNL(anz):
+   for i in range(anz):
+      print ""
 
     
 
@@ -182,6 +185,7 @@ def checkConf(cat, name):
 #Setup Dump Search    
 filesBySize = {}
 dupes = []
+blockList = []
 
 def isBadFolder(fnames, dirname):
    for f in fnames:
@@ -195,7 +199,7 @@ def isBadFolder(fnames, dirname):
       elif os.path.isdir(path):
          #skip subfolder .idea
          if f == ".idea":
-            log('Skip file://%s because there is a .idea folder in it!' % dirname, 0)
+            log('Skip file://%s because there is a .idea directory in it!' % dirname, 0)
             return True
    return False
 
@@ -264,8 +268,7 @@ def isFileInDupes(path):
    return False
 
 
-
-
+stepcounter = 0
    
 def decodeFilename(fileName):
 
@@ -288,8 +291,9 @@ def searchfordumps(pathtoSearch):
     global filesBySize
     filesBySize = {}
     log('Scanning directory file://%s ....' % pathtoSearch, 0)
+    printNL(1)
     walker(pathtoSearch)
-
+    printNL(1)
     
     log('Finding potential duplicates...', 0)
     potentialDupes = []
@@ -329,7 +333,7 @@ def searchfordumps(pathtoSearch):
     log('Scanning for real duplicate...', 0)
 
     global dupes
-    
+    dupes = []
     for aSet in potentialDupes:
         outFiles = []
         hashes = {}
@@ -355,10 +359,14 @@ def searchfordumps(pathtoSearch):
 
 
    
-            
-    log('You have to make now ' + str(len(dupes)) + " decisions. Have fun!", 1)
-    j = 0
-    for d in dupes:
+    stepsToDo = len(dupes)
+    printNL(5)
+    
+    log('You have to make now ' + str(stepsToDo) + " decisions. Have fun!", 1)
+    global stepcounter
+    stepcounter = 0
+    
+    for d in list(dupes):
        choice = getChoise(d)
        if choice < len(d) and choice >= 0:
           log('Your choice is %s' % "[" + str(choice) + "] file://" +d[choice] + " ", 1)
@@ -374,76 +382,94 @@ def searchfordumps(pathtoSearch):
                    log('Deleting empty dir file://%s' % emptyDir, 2)
                 except OSError:
                    empty = False
-       elif choice == len(d):
-          log('Skip file://%s' % d[0], 2)
-          skipLogWriter = open(skipLogPath, 'ab')
-          skipLogWriter.write(datetime.now().strftime('%d.%m.%Y %H:%M:%S') + " " + d[0] + "\n")
-          skipLogWriter.close()
-          
-          global skipLog
-          skipLogReader = open(skipLogPath, 'rb')
-          skipLog = skipLogReader.read()
-          skipLogReader.close()
+          dupes.remove(d)
        elif choice == -1:
           log('Skip file://%s' % d[0], 0)
+          dupes.remove(d)
        elif choice == -2:
-          #need to add folders to block list
-          block = True
+          log('Directory option finished', 0)
+          stepcounter -= 1
+       elif choice == -3:
+          log('file://%s already processed' % d[0], 0)
           
-       j += 1
-       log(str(j) + ' done of ' + str(len(dupes)), 1)
+       stepcounter += 1
+       log(str(stepcounter) + ' done of ' + str(stepsToDo), 1)
 
 
 #log Duplicates
 def logDuplicates(dupe, choice):
    dubLogWriter = io.open(dubLogPath, 'ab')
    
-   dubLogWriter.write(datetime.now().strftime('%d.%m.%Y %H:%M:%S') + "  Your choise was "+ str(choice) + " [ file://" + dupe[choice] + " ] I found that file on following places: ")
+   dubLogWriter.write(datetime.now().strftime('%d.%m.%Y %H:%M:%S') + "  Your choise was "+ str(choice) + " [ " + dupe[choice] + " ] I found that file on following places: ")
    
    for i, d in enumerate(dupe):
       if not i == choice and not i == len(dupe) - 1:
-         dubLogWriter.write("file://" + d + " , ")
+         dubLogWriter.write("" + d + " , ")
       elif not i == choice and i == len(dupe) - 1:
-         dubLogWriter.write("file://" + d + "\n")
+         dubLogWriter.write("" + d + "\n")
          
 
    dubLogWriter.close()
 
    
 def getChoise(dupe):
+   global blockList
+   global skipLog
    for f in dupe:
+      dirname = os.path.dirname(f)
+      if dirname in blockList:
+         return -3
+      
       if f in skipLog:
          return -1
-         
+      
+   printNL(3)
    done = False
    while done == False:
       done = True
       
      
-      usr_input = '-1'
+      usr_input = "-1"
          
-      while int(usr_input) not in range(0, len(dupe) + 1):
+      while int(usr_input) not in range(0, len(dupe)):
+         printNL(1)
          log("Which of the following files do you want to keep:", 4)
       
          for i, d in enumerate(dupe):
             log("[" + str(i) + "] file://" + d + "", 5)
       
-         log("[" + str(len(dupe)) + "] Skip", 5)
-         log("[" + str(len(dupe) + 1) + "] List directoys", 5)
-         log("[" + str(len(dupe) + 2) + "] Directory options", 5)
+         log("[s] Skip file 0", 5)
+         log("[l] List directoys", 5)
+         log("[d] Directory options", 5)
       
-         usr_input = '-1'
+         usr_input = "-1"
 
       
-         usr_input = input("Input: ")
-         if usr_input == len(dupe) + 1:
+         usr_input = str(raw_input("Input: "))
+         if usr_input == "s":
+            #log('Skip file://%s' % dupe[0], 2)
+            skipLogWriter = open(skipLogPath, 'ab')
+            skipLogWriter.write(datetime.now().strftime('%d.%m.%Y %H:%M:%S') + " " + dupe[0] + "\n")
+            skipLogWriter.close()
+          
+            skipLogReader = open(skipLogPath, 'rb')
+            skipLog = skipLogReader.read()
+            skipLogReader.close()
+            
+            usr_input = "-1"
+            break
+            
+         elif usr_input == "l":
+            usr_input = "-1"
+            printNL(1)
             listDirs(dupe)
-      
-         elif usr_input == len(dupe) + 2:
+
+         elif usr_input == "d":
+            usr_input = "-1"
             wahl2 = getChoiseDir(dupe)
             
             if wahl2 == 1: #directory option correct
-               usr_input = -2
+               usr_input = "-2"
                break
             elif wahl2 == 0: #back to file option
                done = False
@@ -453,44 +479,129 @@ def getChoise(dupe):
 
 
 def getChoiseDir(dupe):
-   
-   
-   
-   usr_input = '-1'
+   usr_input = "-1"
    
    while int(usr_input) not in range(0, len(dupe)):
-      
-      log("Which of the following folders should be keeped:", 4)
+      printNL(1)
+      log("Which of the following directories should be keeped:", 4)
       for i, f in enumerate(dupe):
          dirname = os.path.dirname(f)
          log("[" + str(i) + "] file://" + dirname, 2)
       
 
-      log("[" + str(len(dupe)) + "] List directoys", 5)
-      log("[" + str(len(dupe) + 1) + "] Skip all files", 5)
-      log("[" + str(len(dupe) + 2) + "] File options", 5)
+      log("[l] List directoys", 5)
+      log("[s] Skip all files in directory 0", 5)
+      log("[f] File options", 5)
    
-      usr_input = '-1'
+      usr_input = "-1"
    
-      usr_input = input("Input: ")
+      usr_input = str(raw_input("Input: "))
       
-      if usr_input == len(dupe):
+      if usr_input == "l":
+         usr_input = "-1"
+         printNL(1)
          listDirs(dupe)
       
-      elif usr_input == len(dupe) + 1:
-         skip = True
-         #skip all files in selected folder
-         break
+      elif usr_input == "s":
+         usr_input = "-1"
+         #skip all files in folder 0 
+         skipDirname = os.path.dirname(dupe[0])
+         skipAllFilesIn(skipDirname)
+         return 1
       
-      elif usr_input == len(dupe) + 2:
+      elif usr_input == "f":
+         usr_input = "-1"
          return 0
          
    #keep all files in selected folder
    #delete all files in other folders
    
+   log('Your choice is %s' % "[" + usr_input + "] file://" + os.path.dirname(dupe[int(usr_input)]) + " ", 1)
+   keepDirname = os.path.dirname(dupe[int(usr_input)])
+   keepAllFilesIn(keepDirname)
+
+   
    return 1
 
-      
+
+
+def keepAllFilesIn(dirname):
+   #keep all Files in dirname and delte all dublicates
+         
+   global blockList
+   global stepcounter
+   
+   global dupes
+   killedFiles = 0
+   for d in list(dupes):
+      #check if one file in d is in dirname
+      choice = -1
+      for i, f in enumerate(d):
+         fdir = os.path.dirname(f)
+         
+         if fdir == dirname:
+            log("[" + str(killedFiles) + '] Original file://%s' % f, 4)
+            choice = i
+            killedFiles += 1
+            break
+
+      if not choice == -1:
+         logDuplicates(d, choice)
+         
+         for i, f in enumerate(d):
+            if not i == choice:
+               log('Deleting file://%s' % f, 2)
+               os.remove(f)
+               try:
+                  emptyDir = os.path.dirname(f)
+                  os.rmdir(emptyDir)
+                  log('Deleting empty dir file://%s' % emptyDir, 2)
+               except OSError:
+                  empty = False
+         dupes.remove(d)
+         #stepcounter += 1
+                  
+   #need to add folders to block list
+
+   blockList.append(dirname)
+
+def skipAllFilesIn(dirname):
+   #skip all Files in dirname
+   
+   global stepcounter
+   global blockList
+   global dupes
+   skipedFiles = 0
+   for d in list(dupes):
+      #check if one file in d is in dirname
+      choice = -1
+      for i, f in enumerate(d):
+         fdir = os.path.dirname(f)
+         
+         if fdir == dirname:
+            log("[" + str(skipedFiles) + '] Skip file://%s' % f, 0)
+            skipLogWriter = open(skipLogPath, 'ab')
+            skipLogWriter.write(datetime.now().strftime('%d.%m.%Y %H:%M:%S') + " " + f + "\n")
+            skipLogWriter.close()
+          
+            global skipLog
+            skipLogReader = open(skipLogPath, 'rb')
+            skipLog = skipLogReader.read()
+            skipLogReader.close()
+            skipedFiles += 1
+            
+            dupes.remove(d)
+            #stepcounter += 1
+            
+            break
+
+
+
+   #need to add folders to block list
+   blockList.append(dirname)
+
+   
+
 log("Dubly started working.", 1)
 
 
