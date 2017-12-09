@@ -196,6 +196,10 @@ def isBadFolder(fnames, dirname):
             log('Skip file://%s because there is a .project file in it!' % dirname, 0)
             return True
          
+         if f == "Makefile" or f == "MAKEFILE":
+            log('Skip file://%s because there is a Mekfile file in it!' % dirname, 0)
+            return True
+         
       elif os.path.isdir(path):
          #skip subfolder .idea
          if f == ".idea":
@@ -389,7 +393,6 @@ def searchfordumps(pathtoSearch):
           dupes.remove(d)
        elif choice == -1:
           log('Skip file://%s' % d[0], 0)
-          dupes.remove(d)
        elif choice == -2:
           log('Directory option finished', 0)
           #stepcounter -= 1
@@ -419,6 +422,8 @@ def logDuplicates(dupe, choice):
 def getChoise(dupe):
    global blockList
    global skipLog
+   global dupes
+   
    for f in dupe:
       dirname = os.path.dirname(f)
       if dirname in blockList:
@@ -459,6 +464,8 @@ def getChoise(dupe):
             skipLogReader = open(skipLogPath, 'rb')
             skipLog = skipLogReader.read()
             skipLogReader.close()
+            
+            dupes.remove(dupe)
             
             usr_input = "-1"
             break
