@@ -222,6 +222,10 @@ def walker(dirname):
       path = os.path.join(dirname, f)
       #walk in dir
       if os.path.isdir(path) and not os.path.islink(path):
+         #dont mess with git
+         if f == ".git":
+            log('Skip file://%s because it is a .git directory!' % path, 0)
+            continue
          walker(path)
          continue
    
@@ -474,6 +478,13 @@ def getChoise(dupe):
             elif wahl2 == 0: #back to file option
                done = False
                break
+         elif usr_input == "ds":
+            skipDirname = os.path.dirname(dupe[0])
+            skipAllFilesIn(skipDirname)
+            usr_input = "-2"
+            break
+         elif not usr_input.isdigit():
+            usr_input = "-1"
    
    return int(usr_input)
 
@@ -512,6 +523,9 @@ def getChoiseDir(dupe):
       elif usr_input == "f":
          usr_input = "-1"
          return 0
+      elif not usr_input.isdigit():
+         usr_input = "-1"
+         
          
    #keep all files in selected folder
    #delete all files in other folders
