@@ -388,7 +388,7 @@ def searchfordumps(pathtoSearch):
           dupes.remove(d)
        elif choice == -2:
           log('Directory option finished', 0)
-          stepcounter -= 1
+          #stepcounter -= 1
        elif choice == -3:
           log('file://%s already processed' % d[0], 0)
           
@@ -529,7 +529,7 @@ def keepAllFilesIn(dirname):
    #keep all Files in dirname and delte all dublicates
          
    global blockList
-   global stepcounter
+   #global stepcounter
    
    global dupes
    killedFiles = 0
@@ -568,7 +568,7 @@ def keepAllFilesIn(dirname):
 def skipAllFilesIn(dirname):
    #skip all Files in dirname
    
-   global stepcounter
+   #global stepcounter
    global blockList
    global dupes
    skipedFiles = 0
