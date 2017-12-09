@@ -221,7 +221,7 @@ def walker(dirname):
    for f in fnames:
       path = os.path.join(dirname, f)
       #walk in dir
-      if os.path.isdir(path):
+      if os.path.isdir(path) and not os.path.islink(path):
          walker(path)
          continue
    
