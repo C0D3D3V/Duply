@@ -244,14 +244,24 @@ def listDir(dirname):
          log("Dir: " + f, 4)
 
       if os.path.isfile(path):
-         log("File: " + f, 5)      
+         if isFileInDupes(path):
+            log("File: " + f, 3)
+         else:
+            log("File: " + f, 5)      
 
 def listDirs(fnames):
    for i, f in enumerate(fnames):
       dirname = os.path.dirname(f)
-      log("[" + str(i) + "] " + dirname, 2) 
+      log("[" + str(i) + "] file://" + dirname, 2) 
       listDir(dirname)
    
+def isFileInDupes(path):
+   global dupes
+   for d in dupes:
+      for f in d:
+         if f == path:
+            return True
+   return False
 
 
 
@@ -416,11 +426,11 @@ def getChoise(dupe):
          log("Which of the following files do you want to keep:", 4)
       
          for i, d in enumerate(dupe):
-            log("[" + str(i) + "] " + d + "", 5)
+            log("[" + str(i) + "] file://" + d + "", 5)
       
          log("[" + str(len(dupe)) + "] Skip", 5)
-         log("[" + str(len(dupe) + 1) + "] List Directoys", 5)
-         log("[" + str(len(dupe) + 2) + "] Directory Options", 5)
+         log("[" + str(len(dupe) + 1) + "] List directoys", 5)
+         log("[" + str(len(dupe) + 2) + "] Directory options", 5)
       
          usr_input = '-1'
 
@@ -453,12 +463,12 @@ def getChoiseDir(dupe):
       log("Which of the following folders should be keeped:", 4)
       for i, f in enumerate(dupe):
          dirname = os.path.dirname(f)
-         log("[" + str(i) + "] " + dirname, 2)
+         log("[" + str(i) + "] file://" + dirname, 2)
       
 
-      log("[" + str(len(dupe)) + "] List Directoys", 5)
-      log("[" + str(len(dupe) + 1) + "] Skip all Files", 5)
-      log("[" + str(len(dupe) + 2) + "] File Options", 5)
+      log("[" + str(len(dupe)) + "] List directoys", 5)
+      log("[" + str(len(dupe) + 1) + "] Skip all files", 5)
+      log("[" + str(len(dupe) + 2) + "] File options", 5)
    
       usr_input = '-1'
    
