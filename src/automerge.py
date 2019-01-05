@@ -238,9 +238,20 @@ def searchfordumps(first_path, second_path):
                         empty = False
             duplicateSets.remove(duplicateSet)
 
+    # Delete empty folders
+    folders = list(os.walk(second_path, topdown=False))[:-1]
+    for folder in folders:
+        if not folder[2]:
+            try:
+                os.rmdir(folder[0])
+                log('Deleting empty dir file://%s' % folder[0], 2)
+                countDeletedEmptyFolder += 1
+            except OSError:
+                empty = False
+
     log("Stats:\n"
         + "%d files have been deleted\n" % countDeletedFiles
-        + "%d empty folders have been deleted\n" % countDeletedFiles
+        + "%d empty folders have been deleted\n" % countDeletedEmptyFolder
         + "%d remaining duplicate sets\n" % len(duplicateSets), 1)
 
     log("It's done. Thanks for using Automerge.", 1)
