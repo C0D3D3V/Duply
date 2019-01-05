@@ -224,17 +224,17 @@ def walker(dirname):
    
    for f in fnames:
       path = os.path.join(dirname, f)
-      if f.endswith(("~", ".aux", ".log", ".dvi", ".lof", ".lot",
-       ".bit", ".idx", ".glo", ".bbl", ".bcf", ".ilg", ".toc",
-        ".ind", ".out", ".blg", ".fdb", ".latexmk", ".fls",
-         ".o", ".del", ".index", ".mf", ".properties",
-         ".zzz", ".mcu8051ide", "LICENSE")):
-            log('Skip file://%s because it is on the blacklist!' % path, 0)
-            continue
+      #if f.endswith(("~", ".aux", ".log", ".dvi", ".lof", ".lot",
+      # ".bit", ".idx", ".glo", ".bbl", ".bcf", ".ilg", ".toc",
+      #  ".ind", ".out", ".blg", ".fdb", ".latexmk", ".fls",
+      #   ".o", ".del", ".index", ".mf", ".properties",
+      #   ".zzz", ".mcu8051ide", "LICENSE")):
+      #      log('Skip file://%s because it is on the blacklist!' % path, 0)
+      #      continue
 
-      if f.startswith((".", "~")):
-            log('Skip file://%s because it is on the blacklist!' % path, 0)
-            continue
+      #if f.startswith((".", "~")):
+      #      log('Skip file://%s because it is on the blacklist!' % path, 0)
+      #      continue
         
       #walk in dir
       if os.path.isdir(path) and not os.path.islink(path):
@@ -242,12 +242,12 @@ def walker(dirname):
          if f == ".git":
             log('Skip file://%s because it is a .git directory!' % path, 0)
             continue
-         if f == "out":
-            log('Skip file://%s because it is a out directory!' % path, 0)
-            continue
-         if f == ".metadata":
-            log('Skip file://%s because it is a .metadata directory!' % path, 0)
-            continue
+         #if f == "out":
+         #   log('Skip file://%s because it is a out directory!' % path, 0)
+         #   continue
+         #if f == ".metadata":
+         #   log('Skip file://%s because it is a .metadata directory!' % path, 0)
+         #   continue
             
 
          #dont mess with git
@@ -396,282 +396,34 @@ def searchfordumps(pathtoSearch):
     global stepcounter
     stepcounter = 0
     
-    for d in list(dupes):
-       choice = getChoise(d)
-       if choice < len(d) and choice >= 0:
-          log('Your choice is %s' % "[" + str(choice) + "] file://" +d[choice] + " ", 1)
-          
-          logDuplicates(d, choice)
-          for i, f in enumerate(d):
-             if not i == choice:
-                log('Deleting file://%s' % f, 2)
-                os.remove(f)
-                try:
-                   emptyDir = os.path.dirname(f)
-                   os.rmdir(emptyDir)
-                   log('Deleting empty dir file://%s' % emptyDir, 2)
-                except OSError:
-                   empty = False
-          dupes.remove(d)
-       elif choice == -1:
-          log('Skip file://%s' % d[0], 0)
-       elif choice == -2:
-          log('Directory option finished', 0)
-          #stepcounter -= 1
-       elif choice == -3:
-          log('file://%s already processed' % d[0], 0)
-          
-       stepcounter += 1
-       log(str(stepcounter) + ' done of ' + str(stepsToDo), 1)
+    for d in list(dupes): 
+      isshit = False
+      for f in d:
+        if not pref_directory in f:
+          isshit = True
+          break
 
+      if isshit: 
+        for f in d:
+           if pref_directory in f:
+              log('Deleting file://%s' % f, 2)
+              os.remove(f)
+              try:
+                 emptyDir = os.path.dirname(f)
+                 os.rmdir(emptyDir)
+                 log('Deleting empty dir file://%s' % emptyDir, 2)
+              except OSError:
+                 empty = False
 
-#log Duplicates
-def logDuplicates(dupe, choice):
-   dubLogWriter = io.open(dubLogPath, 'ab')
-   
-   dubLogWriter.write(datetime.now().strftime('%d.%m.%Y %H:%M:%S') + "  Your choise was "+ str(choice) + " [ " + dupe[choice] + " ] I found that file on following places: ")
-   
-   for i, d in enumerate(dupe):
-      if not i == choice and not i == len(dupe) - 1:
-         dubLogWriter.write("" + d + " , ")
-      elif not i == choice and i == len(dupe) - 1:
-         dubLogWriter.write("" + d + "\n")
-         
+      dupes.remove(d)
 
-   dubLogWriter.close()
+      stepcounter += 1
+      log(str(stepcounter) + ' done of ' + str(stepsToDo), 1)
+
 
    
-def getChoise(dupe):
-   global blockList
-   global skipLog
-   global dupes
-   
-   fave = -1
-   countOwn = 0
-   notonlyfave = False
-   for i, f in enumerate(dupe):
-      dirname = os.path.dirname(f)
-      if dirname in blockList:
-         return -3
-      
-      if f in skipLog:
-         return -1
-      
-      if not pref_directory == "":
-         if pref_directory in dirname:
-            countOwn += 1
-            if fave == -1:
-               fave = i
-         elif not pref_directory in dirname:
-            notonlyfave = True
-
-   if not fave == -1 and notonlyfave and countOwn == 1:
-      log("Auto chose: " + str(fave), 3)
-      return fave
-
-   #if countOwn == 0:
-   #   skipLogWriter = open(skipLogPath, 'ab')
-   #   skipLogWriter.write(datetime.now().strftime('%d.%m.%Y %H:%M:%S') + " " + dupe[0] + "\n")
-   #   skipLogWriter.close()
-          
-   #   skipLogReader = open(skipLogPath, 'rb')
-   #   skipLog = skipLogReader.read()
-   #   skipLogReader.close()
-      
-   #   dupes.remove(dupe)
-   #   return -1
-
-      
-   printNL(3)
-   done = False
-   while done == False:
-      done = True
-      
-     
-      usr_input = "-1"
-         
-      while int(usr_input) not in range(0, len(dupe)):
-         printNL(1)
-         log("Which of the following files do you want to keep:", 4)
-      
-         for i, d in enumerate(dupe):
-            log("[" + str(i) + "] file://" + d + "", 5)
-      
-         log("[s] Skip file 0", 5)
-         log("[l] List directoys", 5)
-         log("[d] Directory options", 5)
-      
-         usr_input = "-1"
-
-      
-         usr_input = str(raw_input("Input: "))
-         if usr_input == "s":
-            #log('Skip file://%s' % dupe[0], 2)
-            skipLogWriter = open(skipLogPath, 'ab')
-            skipLogWriter.write(datetime.now().strftime('%d.%m.%Y %H:%M:%S') + " " + dupe[0] + "\n")
-            skipLogWriter.close()
-          
-            skipLogReader = open(skipLogPath, 'rb')
-            skipLog = skipLogReader.read()
-            skipLogReader.close()
-            
-            dupes.remove(dupe)
-            
-            usr_input = "-1"
-            break
-            
-         elif usr_input == "l":
-            usr_input = "-1"
-            printNL(1)
-            listDirs(dupe)
-
-         elif usr_input == "d":
-            usr_input = "-1"
-            wahl2 = getChoiseDir(dupe)
-            
-            if wahl2 == 1: #directory option correct
-               usr_input = "-2"
-               break
-            elif wahl2 == 0: #back to file option
-               done = False
-               break
-         elif usr_input == "ds":
-            skipDirname = os.path.dirname(dupe[0])
-            skipAllFilesIn(skipDirname)
-            usr_input = "-2"
-            break
-         elif not usr_input.isdigit():
-            usr_input = "-1"
-   
-   return int(usr_input)
 
 
-def getChoiseDir(dupe):
-   usr_input = "-1"
-   
-   while int(usr_input) not in range(0, len(dupe)):
-      printNL(1)
-      log("Which of the following directories should be keeped:", 4)
-      for i, f in enumerate(dupe):
-         dirname = os.path.dirname(f)
-         log("[" + str(i) + "] file://" + dirname, 2)
-      
-
-      log("[l] List directoys", 5)
-      log("[s] Skip all files in directory 0", 5)
-      log("[f] File options", 5)
-   
-      usr_input = "-1"
-   
-      usr_input = str(raw_input("Input: "))
-      
-      if usr_input == "l":
-         usr_input = "-1"
-         printNL(1)
-         listDirs(dupe)
-      
-      elif usr_input == "s":
-         usr_input = "-1"
-         #skip all files in folder 0 
-         skipDirname = os.path.dirname(dupe[0])
-         skipAllFilesIn(skipDirname)
-         return 1
-      
-      elif usr_input == "f":
-         usr_input = "-1"
-         return 0
-      elif not usr_input.isdigit():
-         usr_input = "-1"
-         
-         
-   #keep all files in selected folder
-   #delete all files in other folders
-   
-   log('Your choice is %s' % "[" + usr_input + "] file://" + os.path.dirname(dupe[int(usr_input)]) + " ", 1)
-   keepDirname = os.path.dirname(dupe[int(usr_input)])
-   keepAllFilesIn(keepDirname)
-
-   
-   return 1
-
-
-
-def keepAllFilesIn(dirname):
-   #keep all Files in dirname and delte all dublicates
-         
-   global blockList
-   #global stepcounter
-   
-   global dupes
-   killedFiles = 0
-   for d in list(dupes):
-      #check if one file in d is in dirname
-      choice = -1
-      for i, f in enumerate(d):
-         fdir = os.path.dirname(f)
-         
-         if fdir == dirname:
-            log("[" + str(killedFiles) + '] Original file://%s' % f, 4)
-            choice = i
-            killedFiles += 1
-            break
-
-      if not choice == -1:
-         logDuplicates(d, choice)
-         
-         for i, f in enumerate(d):
-            if not i == choice:
-               log('Deleting file://%s' % f, 2)
-               os.remove(f)
-               try:
-                  emptyDir = os.path.dirname(f)
-                  os.rmdir(emptyDir)
-                  log('Deleting empty dir file://%s' % emptyDir, 2)
-               except OSError:
-                  empty = False
-         dupes.remove(d)
-         #stepcounter += 1
-                  
-   #need to add folders to block list
-
-   blockList.append(dirname)
-
-def skipAllFilesIn(dirname):
-   #skip all Files in dirname
-   
-   #global stepcounter
-   global blockList
-   global dupes
-   skipedFiles = 0
-   for d in list(dupes):
-      #check if one file in d is in dirname
-      choice = -1
-      for i, f in enumerate(d):
-         fdir = os.path.dirname(f)
-         
-         if fdir == dirname:
-            log("[" + str(skipedFiles) + '] Skip file://%s' % f, 0)
-            skipLogWriter = open(skipLogPath, 'ab')
-            skipLogWriter.write(datetime.now().strftime('%d.%m.%Y %H:%M:%S') + " " + f + "\n")
-            skipLogWriter.close()
-          
-            global skipLog
-            skipLogReader = open(skipLogPath, 'rb')
-            skipLog = skipLogReader.read()
-            skipLogReader.close()
-            skipedFiles += 1
-            
-            dupes.remove(d)
-            #stepcounter += 1
-            
-            break
-
-
-
-   #need to add folders to block list
-   blockList.append(dirname)
-
-   
 
 log("Dubly started working.", 1)
 
@@ -682,23 +434,22 @@ log("Dubly started working.", 1)
 #4 = violet
 #5 = blau
 
-if not len(sys.argv) == 2 and not len(sys.argv) == 3:
-    log("Error parsing Variable. First Argument should be a path, in which I will annihilate all dublicates.", 3)
+if not len(sys.argv) == 3 :
+    log("Error parsing Variable. First Argument should be a path, in which I will check for dublicates. Second Argument should be a path, in which I will annihilate all dublicates.", 3)
     exit()
 
-pref_directory = ""
 root_directory = str(sys.argv[1])
-if  len(sys.argv) == 3:
-   pref_directory = str(sys.argv[2])
-   if not os.path.isdir(pref_directory):
-      log("Error parsing Variable. Second Argument should be a valid path.", 3)
-      exit()
+pref_directory = str(sys.argv[2])
+if not os.path.isdir(pref_directory):
+  log("Error parsing Variable. Second Argument should be a valid path.", 3)
+  exit()
 
-   pref_directory = os.path.abspath(pref_directory)
+pref_directory = os.path.abspath(pref_directory)
 
-   if not os.path.isdir(root_directory):
-      log("Error parsing Variable. Absolut Path should be valid too. Caluclated absulut path: " + pref_directory, 3)
-      exit()
+
+if not os.path.isdir(root_directory):
+  log("Error parsing Variable. Absolut Path should be valid too. Caluclated absulut path: " + pref_directory, 3)
+  exit()
    
 log("root_directory found file://" + root_directory, 0)
 
@@ -716,6 +467,9 @@ if not os.path.isdir(root_directory):
    
 log("root_directory found file://" + root_directory, 0)
 
+if not root_directory in pref_directory:
+    log("Error parsing Variable. Second Argunment need to be a subfolder of the first Argument.", 3)
+    exit()
 
 
 dubLogPath = normPath(addSlashIfNeeded(root_directory)+ ".dublyhistory.log")
