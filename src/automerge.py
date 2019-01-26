@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 #  Copyright 2017 Daniel Vogt
-import urllib
 import os
 import os.path
 import sys
@@ -116,7 +115,7 @@ def walker(dirname):
         # print path + " size: " + str(size)
         if size < minSize:
             continue
-        if filesBySize.has_key(size):
+        if size in filesBySize:
             a = filesBySize[size]
         else:
             a = []
@@ -160,7 +159,7 @@ def searchfordumps(first_path, second_path):
             aFile = file(fileName, 'r')
             hasher = md5.new(aFile.read(1024))
             hashValue = hasher.digest()
-            if hashes.has_key(hashValue):
+            if hashValue in hashes:
                 x = hashes[hashValue]
                 if type(x) is not trueType:
                     outFiles.append(hashes[hashValue])
@@ -193,7 +192,7 @@ def searchfordumps(first_path, second_path):
                 hasher.update(r)
             aFile.close()
             hashValue = hasher.digest()
-            if hashes.has_key(hashValue):
+            if hashValue in hashes:
                 if hashValue not in hashOutFiles:
                     hashOutFiles[hashValue] = []
                     hashOutFiles[hashValue].append(hashes[hashValue])
@@ -262,10 +261,13 @@ log("Automerge welcomes you!", 1)
 
 if not len(sys.argv) == 3:
     log("Automerge is easy to use.\n"
-        + "However, no warnings are issued before deleting files! Therefore, please read the following information in detail.\n"
+        + "However, no warnings are issued before deleting files! Therefore,"
+        + " please read the following information in detail.\n"
         + "Two parameters are required.\n"
-        + "The first parameter should be a path to a folder from which nothing should be deleted.\n"
-        + "The second parameter should be a path from which all duplicates that already exist in the first specified path will be deleted. \n"
+        + "The first parameter should be a path to a folder from which nothing"
+        + " should be deleted.\n"
+        + "The second parameter should be a path from which all duplicates"
+        + " that already exist in the first specified path will be deleted. \n"
         + "The paths must be different and not subfolders of each other.")
     exit(1)
 
@@ -280,7 +282,8 @@ if not os.path.isdir(first_path):
 first_path = os.path.abspath(first_path)
 
 if not os.path.isdir(first_path):
-    log("Error parsing Variable. Absolut path of first path should be valid too. Calculated absulut path: " + first_path, 3)
+    log("Error parsing Variable. Absolut path of first path should be valid"
+        + " too. Calculated absulut path: " + first_path, 3)
     exit()
 
 log("First path found file://" + first_path, 0)
@@ -297,18 +300,20 @@ second_path = os.path.abspath(second_path)
 
 
 if not os.path.isdir(second_path):
-    log("Error parsing Variable. Absolut path of second path should be valid too. Calculated absulut path: " + second_path, 3)
+    log("Error parsing Variable. Absolut path of second path should be valid"
+        + " too. Calculated absulut path: " + second_path, 3)
     exit()
 
 log("Second path found file://" + second_path, 0)
 
 if (first_path in second_path or second_path in first_path
         or first_path == second_path):
-    log("Error parsing Variable. Second Argunment need to be a subfolder of the first Argument.", 3)
+    log("Error parsing Variable. Both paths must be independent of each"
+        + " other.", 3)
     exit()
 
 
 searchfordumps(normPath(first_path), normPath(second_path))
 
 
-log("Dubly Complete", 1)
+log("Automerge Complete", 1)
