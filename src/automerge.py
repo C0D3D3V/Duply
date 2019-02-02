@@ -115,10 +115,10 @@ def walker(dirname):
         # print path + " size: " + str(size)
         if size < minSize:
             continue
+        a = []
         if size in filesBySize:
             a = filesBySize[size]
         else:
-            a = []
             filesBySize[size] = a
         a.append(path)
 

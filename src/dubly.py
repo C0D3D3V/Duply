@@ -1,12 +1,7 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# coding=utf-8
 
-#  Copyright 2017 Daniel Vogt
-
-
-import io
 import os
-import os.path
 import sys
 import stat
 import md5
@@ -37,8 +32,8 @@ filesBySize = {}
 duplicateSets = []
 blockList = []
 
-useBadFolders = False
-useBadFiles = False
+useBadFolders = True
+useBadFiles = True
 minSize = 2
 
 
@@ -84,11 +79,13 @@ def walker(dirname):
         path = os.path.join(dirname, f)
 
         # unimportend anyway
-        if f.endswith(("~", ".aux", ".log", ".dvi", ".lof", ".lot",
-                       ".bit", ".idx", ".glo", ".bbl", ".bcf", ".ilg", ".toc",
-                       ".ind", ".out", ".blg", ".fdb", ".latexmk", ".fls",
-                       ".o", ".del", ".index", ".mf", ".properties",
-                       ".zzz", ".mcu8051ide", "LICENSE")):
+        if useBadFiles and f.endswith(("~", ".aux", ".log", ".dvi", ".lof",
+                                       ".lot", ".bit", ".idx", ".glo", ".bbl",
+                                       ".bcf", ".ilg", ".toc", ".ind", ".out",
+                                       ".blg", ".fdb", ".latexmk", ".fls",
+                                       ".o", ".del", ".index", ".mf",
+                                       ".properties", ".zzz", ".mcu8051ide",
+                                       "LICENSE")):
             log('Skip file://%s because it is on the blacklist!' % path, 0)
             continue
 
@@ -99,13 +96,13 @@ def walker(dirname):
         # walk in dir
         if os.path.isdir(path) and not os.path.islink(path):
             # dont mess with git and other important folders
-            if f == ".git":
+            if useBadFolders and f == ".git":
                 log('Skip file://%s because it is a .git directory!' % path, 0)
                 continue
-            if f == "out":
+            if useBadFolders and f == "out":
                 log('Skip file://%s because it is a out directory!' % path, 0)
                 continue
-            if f == ".metadata":
+            if useBadFolders and f == ".metadata":
                 log('Skip file://%s because it is a .metadata directory!'
                     % path, 0)
                 continue
@@ -118,10 +115,10 @@ def walker(dirname):
         # print path + " size: " + str(size)
         if size < minSize:
             continue
+        a = []
         if size in filesBySize:
             a = filesBySize[size]
         else:
-            a = []
             filesBySize[size] = a
         a.append(path)
 
@@ -186,7 +183,7 @@ def searchfordumps(first_path, second_path):
     for k in sizes:
         inFiles = filesBySize[k]
         outFiles = []
-        hashes = {}
+        hashes = {}   # Hash Directory
         if len(inFiles) is 1:
             continue
 
