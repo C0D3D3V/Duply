@@ -1,31 +1,34 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+from __future__ import unicode_literals
+
+
 import os
 import sys
 import stat
-import md5
+import hashlib
+import logging
 
 from datetime import datetime
-
-# utf8 shit
-reload(sys)
-sys.setdefaultencoding('utf-8')
-
-
-def log(logString, level=0):
-    logString = logString.encode('utf-8')
-    print(datetime.now().strftime('%H:%M:%S') + " " + logString)
 
 
 def normPath(pathSring):
     return os.path.normpath(pathSring)
 
 
-def printNL(anz):
-    for i in range(anz):
-        print("")
+def md5(s): return hashlib.md5(s.encode('utf-8')).hexdigest()
 
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s  %(levelname)s  {%(module)s}  %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    handlers=[
+        logging.FileHandler("Dubly.log"),
+        logging.StreamHandler()
+    ]
+)
 
 # Setup Dump Search
 filesBySize = {}
@@ -48,7 +51,7 @@ def isBadFolder(fnames, dirname):
                 return True
 
             if f == "Makefile" or f == "MAKEFILE":
-                log('Skip file://%s because there is a Mekfile file in it!' %
+                log('Skip file://%s because there is a Makefile file in it!' %
                     dirname, 0)
                 return True
 
@@ -159,19 +162,35 @@ countDeletedFiles = 0
 countDeletedEmptyFolder = 0
 
 
+def getemptyfiles(rootdir):
+    global countDeletedFiles
+    for root, dirs, files in os.walk(rootdir):
+        for d in ['RECYCLER', 'RECYCLED']:
+            if d in dirs:
+                dirs.remove(d)
+
+        for f in files:
+            fullname = os.path.join(root, f)
+            try:
+                if os.path.getsize(fullname) == 0:
+                    log('Deleting file://%s' % fullname, 2)
+                    os.remove(fullname)
+                    countDeletedFiles += 1
+            except WindowsError:
+                continue
+
+
 def searchfordumps(first_path, second_path):
     # find dublication in folder  pathtoSearch
     global filesBySize
     filesBySize = {}
-    log('Scanning in first path for files: file://%s ....' % first_path, 0)
-    printNL(1)
+    log('Scanning in first path for files: file://%s ..../n' % first_path, 0)
+
     walker(first_path)
 
-    log('Scanning in second path for files: file://%s ....' % second_path, 0)
-    printNL(1)
-    walker(second_path)
+    log('Scanning in second path for files: file://%s .....n' % second_path, 0)
 
-    printNL(1)
+    walker(second_path)
 
     log('Search for potential duplicates...', 0)
     # Create simple Hash list of first 1024 byte
@@ -210,7 +229,7 @@ def searchfordumps(first_path, second_path):
 
     log('%d files found that could potentially be duplicates. In %d sets...' %
         (potentialCount, len(potentialDuplicates)), 0)
-    log('Scanning for real duplicates...', 0)
+    log('Scanning for real duplicates...\n', 0)
 
     global duplicateSets
     duplicateSets = []  # 2D Array of real duplicates
@@ -240,7 +259,6 @@ def searchfordumps(first_path, second_path):
                 duplicateSets.append(hashOutFiles[hash])
 
     stepsToDo = len(duplicateSets)
-    printNL(2)
 
     log('%d real duplicate sets found.' % len(duplicateSets), 1)
 
@@ -285,6 +303,9 @@ def searchfordumps(first_path, second_path):
 
     deleteEmptyFolders()
 
+    # Delete empty files
+    getemptyfiles(second_path)
+
     log("Stats:\n"
         + "%d files have been deleted\n" % countDeletedFiles
         + "%d empty folders have been deleted\n" % countDeletedEmptyFolder
@@ -300,7 +321,8 @@ def automerge():
     global stepcounter
 
     Join = raw_input(
-        'Do you want to automatically delete from the second folder all duplicates that already exist in the first folder? [y/N]\n')
+        'Do you want to automatically delete from the second folder all' +
+        ' duplicates that already exist in the first folder? [y/N]\n')
 
     if Join not in ['yes', 'Yes', 'y', 'Y']:
         return
@@ -364,7 +386,6 @@ def getChoise(dupe):
     global skipLog
     global duplicateSets
 
-    printNL(3)
     done = False
     while not done:
         done = True
@@ -372,14 +393,13 @@ def getChoise(dupe):
         usr_input = "-1"
 
         while int(usr_input) not in range(0, len(dupe)):
-            printNL(1)
-            log("Which of the following files do you want to keep:", 4)
+            log("\n\n\nWhich of the following files do you want to keep:", 4)
 
             for i, d in enumerate(dupe):
                 log("[" + str(i) + "] file://" + d + "", 5)
 
             log("[s] Skip file 0", 5)
-            log("[l] List directoys", 5)
+            log("[l] List directories", 5)
             log("[d] Directory options", 5)
 
             usr_input = "-1"
@@ -403,7 +423,6 @@ def getChoise(dupe):
 
             elif usr_input == "l":
                 usr_input = "-1"
-                printNL(1)
                 listDirs(dupe)
 
             elif usr_input == "d":
@@ -431,8 +450,7 @@ def getChoiseDir(dupe):
     usr_input = "-1"
 
     while int(usr_input) not in range(0, len(dupe)):
-        printNL(1)
-        log("Which of the following directories should be keeped:", 4)
+        log("\nWhich of the following directories should be kept:", 4)
         for i, f in enumerate(dupe):
             dirname = os.path.dirname(f)
             log("[" + str(i) + "] file://" + dirname, 2)
@@ -447,7 +465,6 @@ def getChoiseDir(dupe):
 
         if usr_input == "l":
             usr_input = "-1"
-            printNL(1)
             listDirs(dupe)
 
         elif usr_input == "s":
@@ -475,7 +492,7 @@ def getChoiseDir(dupe):
 
 
 def keepAllFilesIn(dirname):
-    # keep all Files in dirname and delte all dublicates
+    # keep all Files in dirname and delete all duplicates
 
     global blockList
     #global stepcounter
@@ -545,7 +562,7 @@ def skipAllFilesIn(dirname):
     blockList.append(dirname)
 
 
-log("Dubly started working.", 1)
+log('Dubly started working.', 1)
 
 
 if not len(sys.argv) == 3:
@@ -571,8 +588,8 @@ if not os.path.isdir(first_path):
 first_path = os.path.abspath(first_path)
 
 if not os.path.isdir(first_path):
-    log("Error parsing Variable. Absolut path of first path should be valid"
-        + " too. Calculated absulut path: " + first_path, 3)
+    log("Error parsing Variable. Absolute path of first path should be valid"
+        + " too. Calculated absolute path: " + first_path, 3)
     exit()
 
 log("First path found file://" + first_path, 0)
@@ -589,8 +606,8 @@ second_path = os.path.abspath(second_path)
 
 
 if not os.path.isdir(second_path):
-    log("Error parsing Variable. Absolut path of second path should be valid"
-        + " too. Calculated absulut path: " + second_path, 3)
+    log("Error parsing Variable. Absolute path of second path should be valid"
+        + " too. Calculated absolute path: " + second_path, 3)
     exit()
 
 log("Second path found file://" + second_path, 0)
