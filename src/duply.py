@@ -31,7 +31,7 @@ logging.basicConfig(
 )
 
 
-def log(string, level):
+def log(string, level=0):
     if level == 0:
         logging.info(string)
     elif level == 1:
