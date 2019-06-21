@@ -30,6 +30,20 @@ logging.basicConfig(
     ]
 )
 
+
+def log(string, level):
+    if level == 0:
+        logging.info(string)
+    elif level == 1:
+        logging.debug(string)
+    elif level == 2:
+        logging.warning(string)
+    elif level == 3:
+        logging.error(string)
+    elif level >= 4:
+        logging.critical(string)
+
+
 # Setup Dump Search
 filesBySize = {}
 duplicateSets = []
