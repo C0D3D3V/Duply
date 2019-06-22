@@ -33,6 +33,8 @@ minSize = 2
 walkerLastInfo = 0
 walkerCountFiles = 0
 
+duplyLastInfo = 0
+
 
 def isBadFolder(fnames, dirname):
     for f in fnames:
@@ -123,6 +125,7 @@ def walker(dirname):
         walkerCountFiles += 1
 
     if time.time() - walkerLastInfo >= 5:
+        walkerLastInfo = time.time()
         log("Still scanning for files in the path... %d files found" %
             walkerCountFiles, 5)
 
@@ -186,6 +189,7 @@ def searchfordumps(first_path, second_path):
     global filesBySize
     global walkerLastInfo
     global walkerCountFiles
+    global duplyLastInfo
     filesBySize = {}
     log('Scanning in first path for files: file://%s ....' % first_path, 0)
 
@@ -203,6 +207,7 @@ def searchfordumps(first_path, second_path):
         log("Finished, %d files found!\n" % walkerCountFiles, 5)
 
     log('Search for potential duplicates...', 0)
+    duplyLastInfo = time.time()
     # Create simple Hash list of first 1024 byte
     potentialDuplicates = []  # 2D Array (List of outFiles Array)
     potentialCount = 0  # List of files -  not sets
@@ -235,6 +240,10 @@ def searchfordumps(first_path, second_path):
         if len(outFiles):
             potentialDuplicates.append(outFiles)
             potentialCount = potentialCount + len(outFiles)
+        if time.time() - duplyLastInfo >= 5:
+            duplyLastInfo = time.time()
+            log("Still simple comparing files in the path... %d potential duplicates found" %
+                potentialCount, 5)
     del filesBySize
 
     log('%d files found that could potentially be duplicates. In %d sets...' %
@@ -242,6 +251,7 @@ def searchfordumps(first_path, second_path):
     log('Scanning for real duplicates...\n', 0)
 
     global duplicateSets
+    duplyLastInfo = time.time()
     duplicateSets = []  # 2D Array of real duplicates
     for aSet in potentialDuplicates:
         hashOutFiles = {}  # dictionary - hash to array of filenames
@@ -267,6 +277,10 @@ def searchfordumps(first_path, second_path):
         for hash in hashOutFiles:
             if len(hashOutFiles[hash]):
                 duplicateSets.append(hashOutFiles[hash])
+        if time.time() - duplyLastInfo >= 5:
+            duplyLastInfo = time.time()
+            log("Still real comparing files in the path... %d duplicates found" %
+                len(duplicateSets), 5)
 
     stepsToDo = len(duplicateSets)
 
