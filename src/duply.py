@@ -242,9 +242,9 @@ def searchfordumps(first_path, second_path):
             potentialCount = potentialCount + len(outFiles)
         if time.time() - duplyLastInfo >= 5:
             duplyLastInfo = time.time()
-            log(datetime.now().strftime('%H:%M:%S') + " Still simple"
-                + "comparing files in the path... %d potential duplicates"
-                + " found" % potentialCount, 5)
+            log((datetime.now().strftime('%H:%M:%S') + " Still simple"
+                 + "comparing files in the path... %d potential duplicates"
+                 + " found") % potentialCount, 5)
     del filesBySize
 
     log('%d files found that could potentially be duplicates. In %d sets...' %
