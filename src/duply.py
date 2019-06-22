@@ -131,6 +131,8 @@ def walker(dirname):
 
 
 def listDir(dirname):
+    if not os.path.isdir(dirname):
+        return
     fnames = os.listdir(dirname)
 
     for f in fnames:
@@ -254,7 +256,9 @@ def searchfordumps(first_path, second_path):
     global duplicateSets
     duplyLastInfo = time.time()
     duplicateSets = []  # 2D Array of real duplicates
+    countDoneSets = 0
     for aSet in potentialDuplicates:
+        countDoneSets += 1
         hashOutFiles = {}  # dictionary - hash to array of filenames
         hashes = {}
         for fileName in aSet:
@@ -281,8 +285,8 @@ def searchfordumps(first_path, second_path):
         if time.time() - duplyLastInfo >= 5:
             duplyLastInfo = time.time()
             log(datetime.now().strftime('%H:%M:%S') + " Still real comparing"
-                + " files in the path... %d duplicates found" %
-                len(duplicateSets), 5)
+                + " files in the path... %d duplicates found, %d sets checked" %
+                (len(duplicateSets), countDoneSets), 5)
 
     stepsToDo = len(duplicateSets)
 
@@ -456,7 +460,6 @@ def getChoise(dupe):
             elif usr_input == "l":
                 usr_input = "-1"
                 listDirs(dupe)
-
             elif usr_input == "d":
                 usr_input = "-1"
                 wahl2 = getChoiseDir(dupe)
