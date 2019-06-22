@@ -126,8 +126,8 @@ def walker(dirname):
 
     if time.time() - walkerLastInfo >= 5:
         walkerLastInfo = time.time()
-        log("Still scanning for files in the path... %d files found" %
-            walkerCountFiles, 5)
+        log(datetime.now().strftime('%H:%M:%S') + " Still scanning for files"
+            + " in the path... %d files found" % walkerCountFiles, 5)
 
 
 def listDir(dirname):
@@ -242,8 +242,9 @@ def searchfordumps(first_path, second_path):
             potentialCount = potentialCount + len(outFiles)
         if time.time() - duplyLastInfo >= 5:
             duplyLastInfo = time.time()
-            log("Still simple comparing files in the path... %d potential duplicates found" %
-                potentialCount, 5)
+            log(datetime.now().strftime('%H:%M:%S') + " Still simple"
+                + "comparing files in the path... %d potential duplicates"
+                + " found" % potentialCount, 5)
     del filesBySize
 
     log('%d files found that could potentially be duplicates. In %d sets...' %
@@ -279,7 +280,8 @@ def searchfordumps(first_path, second_path):
                 duplicateSets.append(hashOutFiles[hash])
         if time.time() - duplyLastInfo >= 5:
             duplyLastInfo = time.time()
-            log("Still real comparing files in the path... %d duplicates found" %
+            log(datetime.now().strftime('%H:%M:%S') + " Still real comparing"
+                + " files in the path... %d duplicates found" %
                 len(duplicateSets), 5)
 
     stepsToDo = len(duplicateSets)
