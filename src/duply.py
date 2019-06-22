@@ -1,47 +1,24 @@
-#!/usr/bin/env python
-# coding=utf-8
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
+# from __future__ import unicode_literals
 
 
 import os
 import sys
 import stat
-import hashlib
-import logging
+import md5
+import time
 
+from utils.logger import log
 from datetime import datetime
 
 
 def normPath(pathSring):
-    return os.path.normpath(pathSring)
-
-
-def md5(s): return hashlib.md5(s.encode('utf-8')).hexdigest()
-
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s  %(levelname)s  {%(module)s}  %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    handlers=[
-        logging.FileHandler("Dubly.log"),
-        logging.StreamHandler()
-    ]
-)
-
-
-def log(string, level=0):
-    if level == 0:
-        logging.info(string)
-    elif level == 1:
-        logging.debug(string)
-    elif level == 2:
-        logging.warning(string)
-    elif level == 3:
-        logging.error(string)
-    elif level >= 4:
-        logging.critical(string)
+    if pathSring is not None:
+        return os.path.normpath(pathSring)
+    else:
+        return None
 
 
 # Setup Dump Search
@@ -52,6 +29,9 @@ blockList = []
 useBadFolders = True
 useBadFiles = True
 minSize = 2
+
+walkerLastInfo = 0
+walkerCountFiles = 0
 
 
 def isBadFolder(fnames, dirname):
@@ -79,6 +59,8 @@ def isBadFolder(fnames, dirname):
 
 
 def walker(dirname):
+    global walkerLastInfo
+    global walkerCountFiles
     fnames = os.listdir(dirname)
 
     if useBadFolders and isBadFolder(fnames, dirname) is True:
@@ -138,6 +120,11 @@ def walker(dirname):
         else:
             filesBySize[size] = a
         a.append(path)
+        walkerCountFiles += 1
+
+    if time.time() - walkerLastInfo >= 5:
+        log("Still scanning for files in the path... %d files found" %
+            walkerCountFiles, 5)
 
 
 def listDir(dirname):
@@ -197,14 +184,23 @@ def getemptyfiles(rootdir):
 def searchfordumps(first_path, second_path):
     # find dublication in folder  pathtoSearch
     global filesBySize
+    global walkerLastInfo
+    global walkerCountFiles
     filesBySize = {}
-    log('Scanning in first path for files: file://%s ..../n' % first_path, 0)
+    log('Scanning in first path for files: file://%s ....' % first_path, 0)
 
+    walkerCountFiles = 0
+    walkerLastInfo = time.time()
     walker(first_path)
+    log("Finished, %d files found!\n" % walkerCountFiles, 5)
 
-    log('Scanning in second path for files: file://%s .....n' % second_path, 0)
+    if second_path is not None:
+        log('Scanning in second path for files: file://%s ....' % second_path, 0)
 
-    walker(second_path)
+        walkerCountFiles = 0
+        walkerLastInfo = time.time()
+        walker(second_path)
+        log("Finished, %d files found!\n" % walkerCountFiles, 5)
 
     log('Search for potential duplicates...', 0)
     # Create simple Hash list of first 1024 byte
@@ -286,7 +282,8 @@ def searchfordumps(first_path, second_path):
     countDeletedFiles = 0
     countDeletedEmptyFolder = 0
 
-    automerge()
+    if second_path is not None:
+        automerge()
 
     for d in list(duplicateSets):
         choice = getChoise(d)
@@ -298,9 +295,11 @@ def searchfordumps(first_path, second_path):
                 if not i == choice:
                     log('Deleting file://%s' % f, 2)
                     os.remove(f)
+                    countDeletedFiles += 1
                     try:
                         emptyDir = os.path.dirname(f)
                         os.rmdir(emptyDir)
+                        countDeletedEmptyFolder += 1
                         log('Deleting empty dir file://%s' % emptyDir, 2)
                     except OSError:
                         empty = False
@@ -315,10 +314,12 @@ def searchfordumps(first_path, second_path):
         stepcounter += 1
         log(str(stepcounter) + ' done of ' + str(stepsToDo), 1)
 
-    deleteEmptyFolders()
-
     # Delete empty files
-    getemptyfiles(second_path)
+    if second_path is not None:
+        getemptyfiles(second_path)
+
+    getemptyfiles(first_path)
+    deleteEmptyFolders()
 
     log("Stats:\n"
         + "%d files have been deleted\n" % countDeletedFiles
@@ -384,15 +385,16 @@ def deleteEmptyFolders():
                 empty = False
 
     # second path
-    folders = list(os.walk(second_path, topdown=False))[:-1]
-    for folder in folders:
-        if not folder[2]:
-            try:
-                os.rmdir(folder[0])
-                log('Deleting empty dir file://%s' % folder[0], 2)
-                countDeletedEmptyFolder += 1
-            except OSError:
-                empty = False
+    if second_path is not None:
+        folders = list(os.walk(second_path, topdown=False))[:-1]
+        for folder in folders:
+            if not folder[2]:
+                try:
+                    os.rmdir(folder[0])
+                    log('Deleting empty dir file://%s' % folder[0], 2)
+                    countDeletedEmptyFolder += 1
+                except OSError:
+                    empty = False
 
 
 def getChoise(dupe):
@@ -420,13 +422,13 @@ def getChoise(dupe):
 
             usr_input = str(raw_input("Input: "))
             if usr_input == "s":
-                #log('Skip file://%s' % dupe[0], 2)
-                skipLogWriter = open(skipLogPath, 'ab')
+                # log('Skip file://%s' % dupe[0], 2)
+                skipLogWriter = open(skipLogPath, 'a')
                 skipLogWriter.write(datetime.now().strftime(
                     '%d.%m.%Y %H:%M:%S') + " " + dupe[0] + "\n")
                 skipLogWriter.close()
 
-                skipLogReader = open(skipLogPath, 'rb')
+                skipLogReader = open(skipLogPath, 'r')
                 skipLog = skipLogReader.read()
                 skipLogReader.close()
 
@@ -509,8 +511,9 @@ def keepAllFilesIn(dirname):
     # keep all Files in dirname and delete all duplicates
 
     global blockList
-    #global stepcounter
-
+    # global stepcounter
+    global countDeletedEmptyFolder
+    global countDeletedFiles
     global duplicateSets
     killedFiles = 0
     for d in list(duplicateSets):
@@ -531,9 +534,11 @@ def keepAllFilesIn(dirname):
                 if not i == choice:
                     log('Deleting file://%s' % f, 2)
                     os.remove(f)
+                    countDeletedFiles += 1
                     try:
                         emptyDir = os.path.dirname(f)
                         os.rmdir(emptyDir)
+                        countDeletedEmptyFolder += 1
                         log('Deleting empty dir file://%s' % emptyDir, 2)
                     except OSError:
                         empty = False
@@ -557,13 +562,13 @@ def skipAllFilesIn(dirname):
 
             if fdir == dirname:
                 log("[" + str(skipedFiles) + '] Skip file://%s' % f, 0)
-                skipLogWriter = open(skipLogPath, 'ab')
+                skipLogWriter = open(skipLogPath, 'a')
                 skipLogWriter.write(datetime.now().strftime(
                     '%d.%m.%Y %H:%M:%S') + " " + f + "\n")
                 skipLogWriter.close()
 
                 global skipLog
-                skipLogReader = open(skipLogPath, 'rb')
+                skipLogReader = open(skipLogPath, 'r')
                 skipLog = skipLogReader.read()
                 skipLogReader.close()
                 skipedFiles += 1
@@ -579,7 +584,7 @@ def skipAllFilesIn(dirname):
 log('Dubly started working.', 1)
 
 
-if not len(sys.argv) == 3:
+if not len(sys.argv) == 2 and not len(sys.argv) == 3:
     log("Dubly is easy to use.\n"
         + "Please read the following information in detail.\n"
         + "It is possible to start Dubly with one or two parameters.\n"
@@ -606,46 +611,48 @@ if not os.path.isdir(first_path):
         + " too. Calculated absolute path: " + first_path, 3)
     exit()
 
-log("First path found file://" + first_path, 0)
+log("First path found file://" + first_path, 5)
 
+second_path = None
 
-# second path
-second_path = str(sys.argv[2])
+if len(sys.argv) == 3:
+    # second path
+    second_path = str(sys.argv[2])
 
-if not os.path.isdir(second_path):
-    log("Error parsing Variable. Second argument should be a valid path.", 3)
-    exit()
+    if not os.path.isdir(second_path):
+        log("Error parsing Variable. Second argument should be a valid path.",
+            4)
+        exit()
 
-second_path = os.path.abspath(second_path)
+        second_path = os.path.abspath(second_path)
 
+    if not os.path.isdir(second_path):
+        log("Error parsing Variable. Absolute path of second path should be"
+            + " valid too. Calculated absolute path: " + second_path, 3)
+        exit()
 
-if not os.path.isdir(second_path):
-    log("Error parsing Variable. Absolute path of second path should be valid"
-        + " too. Calculated absolute path: " + second_path, 3)
-    exit()
+    log("Second path found file://" + second_path, 5)
 
-log("Second path found file://" + second_path, 0)
-
-if (first_path in second_path or second_path in first_path
-        or first_path == second_path):
-    log("Error parsing Variable. Both paths must be independent of each"
-        + " other.", 3)
-    exit()
-
+    if (normPath(first_path) + "/" in second_path
+        or normPath(second_path) + "/" in first_path
+            or normPath(first_path) == normPath(second_path)):
+        log("Error parsing Variable. Both paths must be independent of each"
+            + " other.", 3)
+        exit()
 
 skipLogPath = normPath(os.path.join(first_path, ".skiphistory.log"))
 
 
 # create skipFile
 if not os.path.isfile(skipLogPath):
-    skipLogWriter = open(skipLogPath, 'ab')
+    skipLogWriter = open(skipLogPath, 'a')
     skipLogWriter.write("SkipFile:V1.0")
     skipLogWriter.close()
     log("Created skip file: file://" + skipLogPath, 0)
 
 log("Using history file: file://" + skipLogPath, 0)
 
-skipLogReader = open(skipLogPath, 'rb')
+skipLogReader = open(skipLogPath, 'r')
 skipLog = skipLogReader.read()
 skipLogReader.close()
 
