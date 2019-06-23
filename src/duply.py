@@ -324,7 +324,9 @@ def searchfordumps(first_path, second_path):
 
     if automaticllyChooseShortestDir is False:
         for d in list(duplicateSets):
-            choice = getChoise(d)
+            choice = -3
+            if checkIfSetIsPorcessed(d) is False:
+                choice = getChoise(d)
             if choice < len(d) and choice >= 0:
                 log('Your choice is %s' %
                     "[" + str(choice) + "] file://" + d[choice] + " ", 1)
@@ -357,8 +359,11 @@ def searchfordumps(first_path, second_path):
             log(str(stepcounter) + ' done of ' + str(stepsToDo), 1)
     else:
         for d in list(duplicateSets):
-            automaticallyChooseDir(d)
-            log('Directory option finished', 0)
+            if checkIfSetIsPorcessed(d) is True:
+                log('file://%s already processed' % d[0], 0)
+            else:
+                automaticallyChooseDir(d)
+                log('Directory option finished', 0)
             stepcounter += 1
             log(str(stepcounter) + ' done of ' + str(stepsToDo), 1)
 
@@ -395,6 +400,18 @@ def askForAutomisation():
 
     if Join in ['yes', 'Yes', 'y', 'Y']:
         automaticllyChooseShortestDir = True
+
+
+def checkIfSetIsPorcessed(dupe):
+    # returns False if there is something to do
+    # and returns True if there is nothing to do
+    count = 0
+    for i, f in enumerate(dupe):
+        if os.path.isfile(f) is True:
+            count += 1
+            if count == 2:
+                return False
+    return True
 
 
 def automerge():
@@ -573,7 +590,7 @@ def getChoiseDir(dupe):
     # keep all files in selected folder
     # delete all files in other folders
 
-    log('Your choice is %s' % "[" + usr_input + "] file://" +
+    log('Your choice is [' + str(usr_input) + "] file://" +
         os.path.dirname(dupe[int(usr_input)]) + " ", 1)
     keepDirname = os.path.dirname(dupe[int(usr_input)])
     keepAllFilesIn(keepDirname)
@@ -585,18 +602,19 @@ def automaticallyChooseDir(dupe):
 
     log("\nAutomaticly decides between following directories:", 4)
     auto_input = 0
-    lengthPath = len(os.path.dirname(enumerate(dupe)[0]))
+    lengthPath = os.path.dirname(dupe[0]).count(os.sep)
     for i, f in enumerate(dupe):
         dirname = os.path.dirname(f)
         log("[" + str(i) + "] file://" + dirname, 2)
-        if lengthPath < len(dirname):
+        if lengthPath > dirname.count(os.sep):
             auto_input = i
 
     # keep all files in selected folder
     # delete all files in other folders
 
-    log('Automaitc choice is %s' % "[" + auto_input + "] file://" +
+    log('Automaitc choice is [' + str(auto_input) + "] file://" +
         os.path.dirname(dupe[int(auto_input)]) + " ", 1)
+
     keepDirname = os.path.dirname(dupe[int(auto_input)])
     keepAllFilesIn(keepDirname)
 
