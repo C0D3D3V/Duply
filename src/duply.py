@@ -320,40 +320,45 @@ def searchfordumps(first_path, second_path):
     if second_path is not None:
         automerge()
 
-    if automaticllyChooseShortestDir is True:
+    if automaticllyChooseShortestDir is False:
+        for d in list(duplicateSets):
+            choice = getChoise(d)
+            if choice < len(d) and choice >= 0:
+                log('Your choice is %s' %
+                    "[" + str(choice) + "] file://" + d[choice] + " ", 1)
 
-    for d in list(duplicateSets):
-        choice = getChoise(d)
-        if choice < len(d) and choice >= 0:
-            log('Your choice is %s' %
-                "[" + str(choice) + "] file://" + d[choice] + " ", 1)
+                for i, f in enumerate(d):
+                    if not i == choice:
+                        log('Deleting file://%s' % f, 2)
+                        try:
+                            os.remove(f)
+                            countDeletedFiles += 1
+                        except Exception:
+                            notthere = True
 
-            for i, f in enumerate(d):
-                if not i == choice:
-                    log('Deleting file://%s' % f, 2)
-                    try:
-                        os.remove(f)
-                        countDeletedFiles += 1
-                    except Exception:
-                        notthere = True
+                        try:
+                            emptyDir = os.path.dirname(f)
+                            os.rmdir(emptyDir)
+                            countDeletedEmptyFolder += 1
+                            log('Deleting empty dir file://%s' % emptyDir, 2)
+                        except OSError:
+                            empty = False
+                            duplicateSets.remove(d)
+            elif choice == -1:
+                log('Skip file://%s' % d[0], 0)
+            elif choice == -2:
+                log('Directory option finished', 0)
+            elif choice == -3:
+                log('file://%s already processed' % d[0], 0)
 
-                    try:
-                        emptyDir = os.path.dirname(f)
-                        os.rmdir(emptyDir)
-                        countDeletedEmptyFolder += 1
-                        log('Deleting empty dir file://%s' % emptyDir, 2)
-                    except OSError:
-                        empty = False
-            duplicateSets.remove(d)
-        elif choice == -1:
-            log('Skip file://%s' % d[0], 0)
-        elif choice == -2:
+            stepcounter += 1
+            log(str(stepcounter) + ' done of ' + str(stepsToDo), 1)
+    else:
+        for d in list(duplicateSets):
+            automaticallyChooseDir(d)
             log('Directory option finished', 0)
-        elif choice == -3:
-            log('file://%s already processed' % d[0], 0)
-
-        stepcounter += 1
-        log(str(stepcounter) + ' done of ' + str(stepsToDo), 1)
+            stepcounter += 1
+            log(str(stepcounter) + ' done of ' + str(stepsToDo), 1)
 
     # Delete empty files
     if second_path is not None:
