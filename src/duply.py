@@ -183,8 +183,11 @@ def getemptyfiles(rootdir):
             try:
                 if os.path.getsize(fullname) == 0:
                     log('Deleting file://%s' % fullname, 2)
-                    os.remove(fullname)
-                    countDeletedFiles += 1
+                    try:
+                        os.remove(fullname)
+                        countDeletedFiles += 1
+                    except OSError:
+                        nothere = True
             except WindowsError:
                 continue
 
@@ -326,8 +329,12 @@ def searchfordumps(first_path, second_path):
             for i, f in enumerate(d):
                 if not i == choice:
                     log('Deleting file://%s' % f, 2)
-                    os.remove(f)
-                    countDeletedFiles += 1
+                    try:
+                        os.remove(f)
+                        countDeletedFiles += 1
+                    except Exception:
+                        notthere = True
+
                     try:
                         emptyDir = os.path.dirname(f)
                         os.rmdir(emptyDir)
@@ -413,8 +420,12 @@ def automerge():
             for filePath in duplicateSet:
                 if second_path in filePath:
                     log('Deleting file://%s' % filePath, 2)
-                    os.remove(filePath)
-                    countDeletedFiles += 1
+                    try:
+                        os.remove(filePath)
+                        countDeletedFiles += 1
+                    except OSError:
+                        nothtere = True
+
                     stepcounter += 1
                     try:
                         emptyDir = os.path.dirname(filePath)
@@ -561,6 +572,28 @@ def getChoiseDir(dupe):
     return 1
 
 
+def automaticallyChooseDir(dupe):
+
+    log("\nAutomaticly decides between following directories:", 4)
+    auto_input = 0
+    lengthPath = len(os.path.dirname(f))
+    for i, f in enumerate(dupe):
+        dirname = os.path.dirname(f)
+        log("[" + str(i) + "] file://" + dirname, 2)
+        if lengthPath < len(dirname):
+            auto_input = i
+
+    # keep all files in selected folder
+    # delete all files in other folders
+
+    log('Automaitc choice is %s' % "[" + auto_input + "] file://" +
+        os.path.dirname(dupe[int(auto_input)]) + " ", 1)
+    keepDirname = os.path.dirname(dupe[int(auto_input)])
+    keepAllFilesIn(keepDirname)
+
+    return 1
+
+
 def keepAllFilesIn(dirname):
     # keep all Files in dirname and delete all duplicates
 
@@ -587,8 +620,12 @@ def keepAllFilesIn(dirname):
             for i, f in enumerate(d):
                 if not i == choice:
                     log('Deleting file://%s' % f, 2)
-                    os.remove(f)
-                    countDeletedFiles += 1
+                    try:
+                        os.remove(f)
+                        countDeletedFiles += 1
+                    except OSError:
+                        notthere = True
+
                     try:
                         emptyDir = os.path.dirname(f)
                         os.rmdir(emptyDir)
