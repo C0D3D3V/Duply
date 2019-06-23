@@ -393,7 +393,7 @@ def askForAutomisation():
     if Join == '':
         return
 
-    if Join not in ['yes', 'Yes', 'y', 'Y']:
+    if Join in ['yes', 'Yes', 'y', 'Y']:
         automaticllyChooseShortestDir = True
 
 
@@ -585,7 +585,7 @@ def automaticallyChooseDir(dupe):
 
     log("\nAutomaticly decides between following directories:", 4)
     auto_input = 0
-    lengthPath = len(os.path.dirname(f))
+    lengthPath = len(os.path.dirname(enumerate(dupe)[0]))
     for i, f in enumerate(dupe):
         dirname = os.path.dirname(f)
         log("[" + str(i) + "] file://" + dirname, 2)
