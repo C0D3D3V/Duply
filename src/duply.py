@@ -460,7 +460,10 @@ def automerge():
                         countDeletedEmptyFolder += 1
                     except OSError:
                         empty = False
-            duplicateSets.remove(duplicateSet)
+            try:
+                duplicateSets.remove(duplicateSet)
+            except ValueError:
+                nothere = True
 
 
 def deleteEmptyFolders():
@@ -524,7 +527,10 @@ def getChoise(dupe):
                 skipLog = skipLogReader.read()
                 skipLogReader.close()
 
-                duplicateSets.remove(dupe)
+                try:
+                    duplicateSets.remove(dupe)
+                except ValueError:
+                    nothere = True
 
                 usr_input = "-1"
                 break
@@ -660,7 +666,10 @@ def keepAllFilesIn(dirname):
                         log('Deleting empty dir file://%s' % emptyDir, 2)
                     except OSError:
                         empty = False
-            duplicateSets.remove(d)
+            try:
+                duplicateSets.remove(d)
+            except ValueError:
+                nothere = True
 
     # need to add folders to block list
 
@@ -691,7 +700,10 @@ def skipAllFilesIn(dirname):
                 skipLogReader.close()
                 skipedFiles += 1
 
-                duplicateSets.remove(d)
+                try:
+                    duplicateSets.remove(d)
+                except ValueError:
+                    nothere = True
 
                 break
 
