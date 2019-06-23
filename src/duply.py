@@ -29,11 +29,14 @@ blockList = []
 useBadFolders = True
 useBadFiles = True
 minSize = 2
+stopDeepScanAt = 10000000  # stops the real scan at 10mb
 
 walkerLastInfo = 0
 walkerCountFiles = 0
 
 duplyLastInfo = 0
+
+automaticllyChooseShortestDir = False
 
 
 def isBadFolder(fnames, dirname):
@@ -192,6 +195,10 @@ def searchfordumps(first_path, second_path):
     global walkerLastInfo
     global walkerCountFiles
     global duplyLastInfo
+
+    # Ask automisation question(s) at start, so user can chill after that
+    askForAutomisation()
+
     filesBySize = {}
     log('Scanning in first path for files: file://%s ....' % first_path, 0)
 
@@ -265,11 +272,16 @@ def searchfordumps(first_path, second_path):
             # log('Scanning file "%s"...' % fileName, 0)
             aFile = file(fileName, 'r')
             hasher = md5.new()
+            countHashedBlocks = 0
             while True:
                 r = aFile.read(4096)
                 if not len(r):
                     break
                 hasher.update(r)
+                countHashedBlocks += 1
+                if countHashedBlocks * 4096 >= stopDeepScanAt:
+                    # don't read complete file
+                    break
             aFile.close()
             hashValue = hasher.digest()
             if hashValue in hashes:
@@ -349,6 +361,26 @@ def searchfordumps(first_path, second_path):
     log("It's done. Thanks for using Dubly.", 1)
 
 
+def askForAutomisation():
+    global automaticllyChooseShortestDir
+
+    Join = raw_input(
+        'Do you want to automatically delete all'
+        + ' duplicates and keep the orignial file with the shortest path'
+        + ' (the directory option is choosen, so it minimize the directories,'
+        + ' but it could be that for some files the path is not minimized)?'
+        + ' [y/N]\n')
+
+    while Join not in ['', 'no', 'No', 'n', 'N', 'yes', 'Yes', 'y', 'Y']:
+        Join = raw_input('I didn\'t understand you, what do you mean? [y/N]')
+
+    if Join == '':
+        return
+
+    if Join not in ['yes', 'Yes', 'y', 'Y']:
+        automaticllyChooseShortestDir = True
+
+
 def automerge():
     global duplicateSets
     global countDeletedFiles
@@ -358,6 +390,9 @@ def automerge():
     Join = raw_input(
         'Do you want to automatically delete from the second folder all' +
         ' duplicates that already exist in the first folder? [y/N]\n')
+
+    while Join not in ['', 'no', 'No', 'n', 'N', 'yes', 'Yes', 'y', 'Y']:
+        Join = raw_input('I didn\'t understand you, what do you mean? [y/N]')
 
     if Join not in ['yes', 'Yes', 'y', 'Y']:
         return
