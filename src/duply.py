@@ -228,7 +228,7 @@ def searchfordumps(first_path, second_path):
     sizes.sort()
     for k in sizes:
         inFiles = filesBySize[k]
-        outFiles = []
+        hashOutFiles = {}  # dictionary - hash to array of filenames
         hashes = {}   # Hash Directory
         if len(inFiles) is 1:
             continue
@@ -241,13 +241,13 @@ def searchfordumps(first_path, second_path):
             hasher = md5.new(aFile.read(1024))
             hashValue = hasher.digest()
             if hashValue in hashes:
-                x = hashes[hashValue]
-                if type(x) is not trueType:
-                    outFiles.append(hashes[hashValue])
-                    hashes[hashValue] = True  # add first only ones
-                outFiles.append(fileName)
+                if hashValue not in hashOutFiles:
+                    hashOutFiles[hashValue] = []
+                    hashOutFiles[hashValue].append(hashes[hashValue])
+                hashOutFiles[hashValue].append(fileName)
             else:
                 hashes[hashValue] = fileName
+
             aFile.close()
         if len(outFiles):
             potentialDuplicates.append(outFiles)
@@ -319,6 +319,8 @@ def searchfordumps(first_path, second_path):
 
     if second_path is not None:
         automerge()
+
+    if automaticllyChooseShortestDir is True:
 
     for d in list(duplicateSets):
         choice = getChoise(d)
