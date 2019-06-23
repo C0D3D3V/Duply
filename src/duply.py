@@ -249,9 +249,11 @@ def searchfordumps(first_path, second_path):
                 hashes[hashValue] = fileName
 
             aFile.close()
-        if len(outFiles):
-            potentialDuplicates.append(outFiles)
-            potentialCount = potentialCount + len(outFiles)
+        for hash in hashOutFiles:
+            if len(hashOutFiles[hash]):
+                potentialDuplicates.append(hashOutFiles[hash])
+                potentialCount = potentialCount + len(hashOutFiles[hash])
+
         if time.time() - duplyLastInfo >= 5:
             duplyLastInfo = time.time()
             log((datetime.now().strftime('%H:%M:%S') + " Still simple"
