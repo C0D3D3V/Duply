@@ -258,7 +258,7 @@ def searchfordumps(first_path, second_path):
             duplyLastInfo = time.time()
             log((datetime.now().strftime('%H:%M:%S') + " Still simple"
                  + " comparing files in the path... %d potential duplicate sets"
-                 + " found") % len(potentialDuplicates), 5)
+                 + " found, with in total %d files") % (len(potentialDuplicates), potentialCount), 5)
     del filesBySize
 
     log('%d files found that could potentially be duplicates. In %d sets...' %
