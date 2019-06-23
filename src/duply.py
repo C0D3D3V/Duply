@@ -507,7 +507,8 @@ def getChoise(dupe):
             log("\n\n\nWhich of the following files do you want to keep:", 4)
 
             for i, d in enumerate(dupe):
-                log("[" + str(i) + "] file://" + d + "", 5)
+                if os.path.isfile(d) is True:
+                    log("[" + str(i) + "] file://" + d + "", 5)
 
             log("[s] Skip file 0", 5)
             log("[l] List directories", 5)
@@ -553,6 +554,12 @@ def getChoise(dupe):
                 skipAllFilesIn(skipDirname)
                 usr_input = "-2"
                 break
+            elif usr_input.isdigit():
+                if int(usr_input) not in range(0, len(dupe)):
+                    usr_input = "-1"
+                    continue
+                if os.path.isfile(dupe[int(usr_input)]) is not True:
+                    usr_input = "-1"
             elif not usr_input.isdigit():
                 usr_input = "-1"
 
@@ -566,7 +573,8 @@ def getChoiseDir(dupe):
         log("\nWhich of the following directories should be kept:", 4)
         for i, f in enumerate(dupe):
             dirname = os.path.dirname(f)
-            log("[" + str(i) + "] file://" + dirname, 2)
+            if os.path.isdir(dirname) is True:
+                log("[" + str(i) + "] file://" + dirname, 2)
 
         log("[l] List directoys", 5)
         log("[s] Skip all files in directory 0", 5)
@@ -590,6 +598,13 @@ def getChoiseDir(dupe):
         elif usr_input == "f":
             usr_input = "-1"
             return 0
+        elif usr_input.isdigit():
+            if int(usr_input) not in range(0, len(dupe)):
+                usr_input = "-1"
+                continue
+            dirname = os.path.dirname(dupe[int(usr_input)])
+            if os.path.isdir(dirname) is not True:
+                usr_input = "-1"
         elif not usr_input.isdigit():
             usr_input = "-1"
 
@@ -606,7 +621,8 @@ def getChoiseDir(dupe):
 
 def automaticallyChooseDir(dupe):
 
-    log("\nAutomaticly decides between following directories:", 4)
+    log("\n Its about: file://%s. Automaticly decides between following directories:" %
+        dupe[0], 4)
     auto_input = 0
     lengthPath = os.path.dirname(dupe[0]).count(os.sep)
     for i, f in enumerate(dupe):
