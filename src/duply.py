@@ -630,18 +630,20 @@ def getChoiseDir(dupe):
 
 
 def automaticallyChooseDir(dupe):
-
+    # keep shortest path with longest name
     log("\n Its about: file://%s. Automaticly decides between following directories:" %
         dupe[0], 4)
     auto_input = -1
     lengthPath = -1
+    countParts = -1
     for i, f in enumerate(dupe):
         dirname = os.path.dirname(f)
         if os.path.isdir(dirname) is True:
             log("[" + str(i) + "] file://" + dirname, 2)
-            if lengthPath > dirname.count(os.sep) or lengthPath == -1:
+            if countParts > dirname.count(os.sep) or countParts == -1 or (lengthPath < len(dirname) and countParts >= dirname.count(os.sep)):
                 auto_input = i
-                lengthPath = dirname.count(os.sep)
+                countParts = dirname.count(os.sep)
+                lengthPath = len(dirname)
 
     if auto_input == -1:
         log('Failed to make a decision!', 3)
