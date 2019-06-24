@@ -201,6 +201,8 @@ def searchfordumps(first_path, second_path):
 
     # Ask automisation question(s) at start, so user can chill after that
     askForAutomisation()
+    if second_path is not None:
+        askForAutomerge()
 
     filesBySize = {}
     log('Scanning in first path for files: file://%s ....' % first_path, 0)
@@ -319,7 +321,7 @@ def searchfordumps(first_path, second_path):
     countDeletedFiles = 0
     countDeletedEmptyFolder = 0
 
-    if second_path is not None:
+    if second_path is not None and automaticallyMerge is True:
         automerge()
 
     if automaticllyChooseShortestDir is False:
@@ -414,12 +416,7 @@ def checkIfSetIsPorcessed(dupe):
     return True
 
 
-def automerge():
-    global duplicateSets
-    global countDeletedFiles
-    global countDeletedEmptyFolder
-    global stepcounter
-
+def askForAutomerge():
     Join = raw_input(
         'Do you want to automatically delete from the second folder all' +
         ' duplicates that already exist in the first folder? [y/N]\n')
@@ -428,6 +425,19 @@ def automerge():
         Join = raw_input('I didn\'t understand you, what do you mean? [y/N]')
 
     if Join not in ['yes', 'Yes', 'y', 'Y']:
+        return
+
+    global automaticallyMerge
+    automaticallyMerge = True
+
+
+def automerge():
+    global duplicateSets
+    global countDeletedFiles
+    global countDeletedEmptyFolder
+    global stepcounter
+
+    if automaticallyMerge is False:
         return
 
     for duplicateSet in list(duplicateSets):
@@ -623,14 +633,19 @@ def automaticallyChooseDir(dupe):
 
     log("\n Its about: file://%s. Automaticly decides between following directories:" %
         dupe[0], 4)
-    auto_input = 0
-    lengthPath = os.path.dirname(dupe[0]).count(os.sep)
+    auto_input = -1
+    lengthPath = -1
     for i, f in enumerate(dupe):
         dirname = os.path.dirname(f)
-        log("[" + str(i) + "] file://" + dirname, 2)
-        if lengthPath > dirname.count(os.sep):
-            auto_input = i
+        if os.path.isdir(dirname) is True:
+            log("[" + str(i) + "] file://" + dirname, 2)
+            if lengthPath > dirname.count(os.sep) or lengthPath == -1:
+                auto_input = i
+                lengthPath = dirname.count(os.sep)
 
+    if auto_input == -1:
+        log('Failed to make a decision!', 3)
+        return 0
     # keep all files in selected folder
     # delete all files in other folders
 
