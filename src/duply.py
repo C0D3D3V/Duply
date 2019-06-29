@@ -413,6 +413,8 @@ def askToSkip():
 
     if Join in ['yes', 'Yes', 'y', 'Y']:
         useBadFolders = True
+    else:
+        useBadFolders = False
 
     Join = raw_input(
         'Do you want to automatically skip all special files like log and compile files? [Y/n]\n')
@@ -422,6 +424,8 @@ def askToSkip():
 
     if Join in ['yes', 'Yes', 'y', 'Y']:
         useBadFiles = True
+    else:
+        useBadFiles = False
 
 
 def askForAutomisation():
