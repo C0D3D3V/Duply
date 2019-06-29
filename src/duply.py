@@ -36,7 +36,8 @@ walkerCountFiles = 0
 
 duplyLastInfo = 0
 
-automaticllyChooseShortestDir = False
+automaticallyChooseShortestDir = False
+automaticallyChooseShortestFile = False
 
 
 def isBadFolder(fnames, dirname):
@@ -187,7 +188,7 @@ def getemptyfiles(rootdir):
                         os.remove(fullname)
                         countDeletedFiles += 1
                     except OSError:
-                        nothere = True
+                        notthere = True
             except WindowsError:
                 continue
 
@@ -200,6 +201,7 @@ def searchfordumps(first_path, second_path):
     global duplyLastInfo
 
     # Ask automisation question(s) at start, so user can chill after that
+    askToSkip()
     askForAutomisation()
     if second_path is not None:
         askForAutomerge()
@@ -324,7 +326,25 @@ def searchfordumps(first_path, second_path):
     if second_path is not None and automaticallyMerge is True:
         automerge()
 
-    if automaticllyChooseShortestDir is False:
+    if automaticallyChooseShortestDir is True:
+        for d in list(duplicateSets):
+            if checkIfSetIsPorcessed(d) is True:
+                log('file://%s already processed' % d[0], 0)
+            else:
+                automaticallyChooseDir(d)
+                log('Directory option finished', 0)
+            stepcounter += 1
+            log(str(stepcounter) + ' done of ' + str(stepsToDo), 1)
+
+    if automaticallyChooseShortestFile is True:
+        for d in list(duplicateSets):
+            if checkIfSetIsPorcessed(d) is True:
+                log('file://%s already processed' % d[0], 0)
+            else:
+                automaticallyChooseFile(d)
+            stepcounter += 1
+            log(str(stepcounter) + ' done of ' + str(stepsToDo), 1)
+    else:
         for d in list(duplicateSets):
             choice = -3
             if checkIfSetIsPorcessed(d) is False:
@@ -335,7 +355,7 @@ def searchfordumps(first_path, second_path):
 
                 for i, f in enumerate(d):
                     if not i == choice:
-                        log('Deleting file://%s' % f, 2)
+                        log('[%d] Deleting file://%s' % (i, f), 2)
                         try:
                             os.remove(f)
                             countDeletedFiles += 1
@@ -346,10 +366,17 @@ def searchfordumps(first_path, second_path):
                             emptyDir = os.path.dirname(f)
                             os.rmdir(emptyDir)
                             countDeletedEmptyFolder += 1
-                            log('Deleting empty dir file://%s' % emptyDir, 2)
+                            log('Deleting empty directory file://%s' %
+                                emptyDir, 2)
                         except OSError:
                             empty = False
+                        try:
                             duplicateSets.remove(d)
+                        except Exception:
+                            notthere = True
+                    else:
+                        log("[" + str(i) + '] Original file://%s' % f, 4)
+
             elif choice == -1:
                 log('Skip file://%s' % d[0], 0)
             elif choice == -2:
@@ -359,16 +386,6 @@ def searchfordumps(first_path, second_path):
 
             stepcounter += 1
             log(str(stepcounter) + ' done of ' + str(stepsToDo), 1)
-    else:
-        for d in list(duplicateSets):
-            if checkIfSetIsPorcessed(d) is True:
-                log('file://%s already processed' % d[0], 0)
-            else:
-                automaticallyChooseDir(d)
-                log('Directory option finished', 0)
-            stepcounter += 1
-            log(str(stepcounter) + ' done of ' + str(stepsToDo), 1)
-
     # Delete empty files
     if second_path is not None:
         getemptyfiles(second_path)
@@ -384,24 +401,55 @@ def searchfordumps(first_path, second_path):
     log("It's done. Thanks for using Dubly.", 1)
 
 
+def askToSkip():
+    global useBadFiles
+    global useBadFolders
+
+    Join = raw_input(
+        'Do you want to automatically skip all special diractories like git Projects or jetbrains Projects? [Y/n]\n')
+
+    while Join not in ['', 'no', 'No', 'n', 'N', 'yes', 'Yes', 'y', 'Y']:
+        Join = raw_input('I didn\'t understand you, what do you mean? [Y/n]')
+
+    if Join in ['yes', 'Yes', 'y', 'Y']:
+        useBadFolders = True
+
+     Join = raw_input(
+        'Do you want to automatically skip all special files like log and compile files? [Y/n]\n')
+
+    while Join not in ['', 'no', 'No', 'n', 'N', 'yes', 'Yes', 'y', 'Y']:
+        Join = raw_input('I didn\'t understand you, what do you mean? [Y/n]')
+
+    
+    if Join in ['yes', 'Yes', 'y', 'Y']:
+        useBadFiles = True
+
+
+
 def askForAutomisation():
-    global automaticllyChooseShortestDir
+    global automaticallyChooseShortestDir
+    global automaticallyChooseShortestFile
 
     Join = raw_input(
         'Do you want to automatically delete all'
-        + ' duplicates and keep the orignial file with the shortest path'
-        + ' (the directory option is choosen, so it minimize the directories,'
-        + ' but it could be that for some files the path is not minimized)?'
-        + ' [y/N]\n')
+        + ' duplicates and keep the orignial file with the shortest path\n'
+        + ' [1] Automatically choose the file with the shortest path\n'
+        + ' [2] Automatically choose the directory with the shotrest path.'
+        + ' (This corresponds to the directory option to keep all files in'
+        + ' the directory with the shortest path.)\n'
+        + ' [N] Default no automisation is done\n')
 
-    while Join not in ['', 'no', 'No', 'n', 'N', 'yes', 'Yes', 'y', 'Y']:
-        Join = raw_input('I didn\'t understand you, what do you mean? [y/N]')
+    while Join not in ['', 'no', 'No', 'n', 'N', '1', '2']:
+        Join = raw_input('I didn\'t understand you, what do you mean? [1/2/N]')
 
     if Join == '':
         return
 
-    if Join in ['yes', 'Yes', 'y', 'Y']:
-        automaticllyChooseShortestDir = True
+    if Join in ['1']:
+        automaticallyChooseShortestFile = True
+
+    if Join in ['2']:
+        automaticallyChooseShortestDir = True
 
 
 def checkIfSetIsPorcessed(dupe):
@@ -460,20 +508,20 @@ def automerge():
                         os.remove(filePath)
                         countDeletedFiles += 1
                     except OSError:
-                        nothtere = True
+                        notthere = True
 
                     stepcounter += 1
                     try:
                         emptyDir = os.path.dirname(filePath)
                         os.rmdir(emptyDir)
-                        log('Deleting empty dir file://%s' % emptyDir, 2)
+                        log('Deleting empty directory file://%s' % emptyDir, 2)
                         countDeletedEmptyFolder += 1
                     except OSError:
                         empty = False
             try:
                 duplicateSets.remove(duplicateSet)
             except ValueError:
-                nothere = True
+                notthere = True
 
 
 def deleteEmptyFolders():
@@ -484,7 +532,7 @@ def deleteEmptyFolders():
         if not folder[2]:
             try:
                 os.rmdir(folder[0])
-                log('Deleting empty dir file://%s' % folder[0], 2)
+                log('Deleting empty directory file://%s' % folder[0], 2)
                 countDeletedEmptyFolder += 1
             except OSError:
                 empty = False
@@ -496,7 +544,7 @@ def deleteEmptyFolders():
             if not folder[2]:
                 try:
                     os.rmdir(folder[0])
-                    log('Deleting empty dir file://%s' % folder[0], 2)
+                    log('Deleting empty directory file://%s' % folder[0], 2)
                     countDeletedEmptyFolder += 1
                 except OSError:
                     empty = False
@@ -541,7 +589,7 @@ def getChoise(dupe):
                 try:
                     duplicateSets.remove(dupe)
                 except ValueError:
-                    nothere = True
+                    notthere = True
 
                 usr_input = "-1"
                 break
@@ -586,7 +634,7 @@ def getChoiseDir(dupe):
             if os.path.isdir(dirname) is True:
                 log("[" + str(i) + "] file://" + dirname, 2)
 
-        log("[l] List directoys", 5)
+        log("[l] List directories", 5)
         log("[s] Skip all files in directory 0", 5)
         log("[f] File options", 5)
 
@@ -629,13 +677,68 @@ def getChoiseDir(dupe):
     return 1
 
 
-def automaticallyChooseDir(dupe):
+def automaticallyChooseFile(dupe):
+    global countDeletedFiles
+    global countDeletedEmptyFolder
+    global duplicateSets
     # keep shortest path with longest name
-    log("\n Its about: file://%s. Automaticly decides between following directories:" %
+    log("\n Its about: file://%s. Automatically decides between following files:" %
         dupe[0], 4)
     auto_input = -1
     lengthPath = -1
     countParts = -1
+    for i, f in enumerate(dupe):
+        dirname = os.path.dirname(f)
+        if os.path.isdir(dirname) is True:
+            log("[" + str(i) + "] file://" + dirname, 2)
+            if countParts > dirname.count(os.sep) or countParts == -1 or (lengthPath < len(dirname) and countParts >= dirname.count(os.sep)):
+                auto_input = i
+                countParts = dirname.count(os.sep)
+                lengthPath = len(dirname)
+
+    if auto_input == -1:
+        log('Failed to make a decision!', 3)
+        return 0
+    # keep selected file and
+    # delete all other files
+
+    log('Automaitc choice is [' + str(auto_input) + "] file://" +
+        dupe[int(auto_input)] + " ", 1)
+
+    for i, f in enumerate(dupe):
+        if not i == auto_input:
+            log('Deleting file://%s' % f, 2)
+            try:
+                os.remove(f)
+                countDeletedFiles += 1
+            except Exception:
+                notthere = True
+
+            try:
+                emptyDir = os.path.dirname(f)
+                os.rmdir(emptyDir)
+                countDeletedEmptyFolder += 1
+                log('Deleting empty directory file://%s' %
+                    emptyDir, 2)
+            except OSError:
+                empty = False
+
+            try:
+                duplicateSets.remove(dupe)
+            except ValueError:
+                notthere = True
+
+    return 1
+
+
+def automaticallyChooseDir(dupe):
+    # keep shortest path with longest name
+    log("\n Its about: file://%s. Automatically decides between following directories:" %
+        dupe[0], 4)
+    auto_input = -1
+    lengthPath = -1
+    countParts = -1
+
     for i, f in enumerate(dupe):
         dirname = os.path.dirname(f)
         if os.path.isdir(dirname) is True:
@@ -696,13 +799,13 @@ def keepAllFilesIn(dirname):
                         emptyDir = os.path.dirname(f)
                         os.rmdir(emptyDir)
                         countDeletedEmptyFolder += 1
-                        log('Deleting empty dir file://%s' % emptyDir, 2)
+                        log('Deleting empty directory file://%s' % emptyDir, 2)
                     except OSError:
                         empty = False
             try:
                 duplicateSets.remove(d)
             except ValueError:
-                nothere = True
+                notthere = True
 
     # need to add folders to block list
 
@@ -736,7 +839,7 @@ def skipAllFilesIn(dirname):
                 try:
                     duplicateSets.remove(d)
                 except ValueError:
-                    nothere = True
+                    notthere = True
 
                 break
 
