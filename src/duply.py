@@ -74,12 +74,6 @@ def walker(dirname):
 
     global filesBySize
 
-    # Nobody likes Thumbs folder
-    try:
-        fnames.remove('Thumbs')
-    except ValueError:
-        pass
-
     for f in fnames:
         path = os.path.join(dirname, f)
 
@@ -109,6 +103,10 @@ def walker(dirname):
                 continue
             if useBadFolders and f == ".metadata":
                 log('Skip file://%s because it is a .metadata directory!'
+                    % path, 0)
+                continue
+            if useBadFolders and f == "Thumbs":
+                log('Skip file://%s because it is a Thumbs directory!'
                     % path, 0)
                 continue
 
