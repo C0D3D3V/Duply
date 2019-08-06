@@ -38,6 +38,8 @@ duplyLastInfo = 0
 
 automaticallyChooseShortestDir = False
 automaticallyChooseShortestFile = False
+automaticallyMerge = False
+automaticallyCopy = False
 
 
 def isBadFolder(fnames, dirname):
@@ -323,6 +325,8 @@ def searchfordumps(first_path, second_path):
 
     if second_path is not None and automaticallyMerge is True:
         automerge()
+    if second_path is not None and automaticallyCopy is True:
+        autocopy()
 
     if automaticallyChooseShortestDir is True:
         for d in list(duplicateSets):
@@ -334,7 +338,7 @@ def searchfordumps(first_path, second_path):
             stepcounter += 1
             log(str(stepcounter) + ' done of ' + str(stepsToDo), 1)
 
-    if automaticallyChooseShortestFile is True:
+    elif automaticallyChooseShortestFile is True:
         for d in list(duplicateSets):
             if checkIfSetIsPorcessed(d) is True:
                 log('file://%s already processed' % d[0], 0)
@@ -465,6 +469,9 @@ def checkIfSetIsPorcessed(dupe):
 
 
 def askForAutomerge():
+    global automaticallyMerge
+    global automaticallyCopy
+
     Join = raw_input(
         'Do you want to automatically delete from the second folder all' +
         ' duplicates that already exist in the first folder? [y/N]\n')
@@ -472,11 +479,20 @@ def askForAutomerge():
     while Join not in ['', 'no', 'No', 'n', 'N', 'yes', 'Yes', 'y', 'Y']:
         Join = raw_input('I didn\'t understand you, what do you mean? [y/N]')
 
-    if Join not in ['yes', 'Yes', 'y', 'Y']:
-        return
+    if Join in ['yes', 'Yes', 'y', 'Y']:
+        automaticallyMerge = True
 
-    global automaticallyMerge
-    automaticallyMerge = True
+    """
+    Join = raw_input(
+        'Do you want to automatically copy from the second folder all' +
+        ' files that do not exist in the first folder into the first folder? [y/N]\n')
+
+    while Join not in ['', 'no', 'No', 'n', 'N', 'yes', 'Yes', 'y', 'Y']:
+        Join = raw_input('I didn\'t understand you, what do you mean? [y/N]')
+
+    if Join in ['yes', 'Yes', 'y', 'Y']:
+        automaticallyCopy = True
+    """
 
 
 def automerge():
@@ -522,6 +538,29 @@ def automerge():
                 duplicateSets.remove(duplicateSet)
             except ValueError:
                 notthere = True
+
+
+def autocopy():
+    global duplicateSets
+
+    if automaticallyCopy is False:
+        return
+
+    for duplicateSet in list(duplicateSets):
+        toCopy = False
+        for filePath in duplicateSet:
+            # Make sure that one duplicate is in second path
+            if second_path in filePath:
+                for file2Path in duplicateSet:
+                    toCopy = True
+                    # Make sure that no duplicate is in first path
+                    if first_path in file2Path:
+                        toCopy = False
+                        break
+                break
+
+        if toCopy:
+            notJetImplementet = True
 
 
 def deleteEmptyFolders():
@@ -690,7 +729,7 @@ def automaticallyChooseFile(dupe):
     for i, f in enumerate(dupe):
         dirname = os.path.dirname(f)
         if os.path.isdir(dirname) is True:
-            log("[" + str(i) + "] file://" + dirname, 2)
+            log("[" + str(i) + "] file://" + f, 2)
             if countParts > dirname.count(os.sep) or countParts == -1 or (lengthPath < len(dirname) and countParts >= dirname.count(os.sep)):
                 auto_input = i
                 countParts = dirname.count(os.sep)
