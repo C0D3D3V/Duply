@@ -8,6 +8,7 @@ import stat
 import time
 
 from logger import log
+from file_helper import normPath
 
 
 def isCriticalFolder(fileList, rootPath):
@@ -78,23 +79,39 @@ def isCriticalFileName(fileName):
     return False
 
 
-def normPath(pathSring):
-    if pathSring is not None:
-        return os.path.normpath(pathSring)
-    else:
-        return None
-
-
-def get_list_of_files_in(basePath, rootPath="", ignoreCriticalFolders=False,
-                         ignoreCriticalFiles=False, lastInfoTime=0):
+def get_list_of_files_in(basePath, ignoreCriticalFolders=False,
+                         ignoreCriticalFiles=False):
     """
     Generates a list of files inside a directory
     including filesize and modified_date
     :param basePath: the Path to the base directory
     (normaly where the database file is)
-    :param rootPath: the Path used for recrusive search
     :param ignoreCriticalFolders: if critical folders should be ignored
     :param ignoreCriticalFiles: if critical files should be ignored
+    :return: list of files
+    """
+    log("Start scanning for files in file://%s" %
+        basePath, 1)
+    listOfFiles = get_list_of_files_in_helper(
+        basePath, ignoreCriticalFolders, ignoreCriticalFiles)[0]
+    log("Finished scanning for files in the path! %d files found" %
+        len(listOfFiles), 5)
+    return listOfFiles
+
+
+def get_list_of_files_in_helper(basePath, ignoreCriticalFolders=False,
+                                ignoreCriticalFiles=False, rootPath="",
+                                lastInfoTime=0):
+    """
+    This is only a helper function to recrusive
+    generate a list of files inside a directory
+    including filesize and modified_date
+    :param basePath: the Path to the base directory
+    (normaly where the database file is)
+    :param ignoreCriticalFolders: if critical folders should be ignored
+    :param ignoreCriticalFiles: if critical files should be ignored
+    :param rootPath: the Path used for recrusive search
+    :param lastInfoTime: only for output usage
     :return: a tuple (list of files , lastInfoTime)
     lastInfoTime is only for output purpose
     """
@@ -121,8 +138,9 @@ def get_list_of_files_in(basePath, rootPath="", ignoreCriticalFolders=False,
                 log('Skip file://%s because it is a %s directory!' %
                     (fullPath, fileName), 0)
 
-            resultRecrusion = get_list_of_files_in(
-                basePath, path, ignoreCriticalFolders, ignoreCriticalFiles, lastInfoTime)
+            resultRecrusion = get_list_of_files_in_helper(
+                basePath, ignoreCriticalFolders, ignoreCriticalFiles, path,
+                lastInfoTime)
             resultFileList += resultRecrusion[0]
             lastInfoTime = resultRecrusion[1]
             continue

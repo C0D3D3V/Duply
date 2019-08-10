@@ -19,7 +19,7 @@ def indexFiles(fileList, database):
     :param database: database file
     """
     basePath = os.path.dirname(database)
-    log('Index files in: file://%s ....' % basePath, 0)
+    log('Index files in: file://%s' % basePath, 0)
     conn = db_helper.create(database)
 
     lastInfoTime = time.time()
@@ -34,9 +34,9 @@ def indexFiles(fileList, database):
             else:
                 db_helper.delete_by_path(conn, file["path"])
 
-        fileName = os.path.koin(basePath, file["path"])
+        fileName = os.path.join(basePath, file["path"])
 
-        openedFile = file(fileName, 'r')
+        openedFile = open(fileName, 'r')
         hasher = hashlib.sha1()
         countHashedBlocks = 0
         while True:
@@ -60,8 +60,8 @@ def indexFiles(fileList, database):
                 (countDoneFiles, len(fileList)), 1)
 
     db_helper.commit(conn)
-    db_helper.close()
-    log('Successfully finished indexing files in: file://%s ....'
+    db_helper.close(conn)
+    log('Successfully finished indexing files in: file://%s!'
         % basePath, 5)
 
 

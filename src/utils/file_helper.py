@@ -29,6 +29,18 @@ def writeListToFile(list, filePrefix, nullsplit=True):
     return path
 
 
+def normPath(pathSring):
+    """
+    Normalize path for the os
+    :param pathString: the path to normalize
+    :returns: the normalized path or None
+    """
+    if pathSring is not None:
+        return os.path.normpath(pathSring)
+    else:
+        return None
+
+
 def tests():
     list = ["/lol/flower/power", "/k/das/macht/", "/zu/viel/spaß"]
     path = writeListToFile(list, "cool")

@@ -169,7 +169,7 @@ def insert_entry(conn, entry):
     cur = conn.cursor()
     cur.execute("""insert into hashes(path, hash, size,
     modified_date) values(?, ?, ?, ?)""",
-                (entry["path"], entry["hash"],
+                (entry["path"], buffer(entry["hash"]),
                  entry["size"], entry["modified_date"]))
     return True
 
@@ -201,6 +201,8 @@ def checkConsistence(fileList, database):
     :param database: path to the database
     """
     conn = create(database)
+    create_all_tabels(conn)
+
     countFound = 0
     entries = get_all_entries(conn)
     moves = {}
