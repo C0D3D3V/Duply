@@ -45,7 +45,7 @@ def create_all_tabels(conn):
     """
     sql_create_index_table = """ CREATE TABLE IF NOT EXISTS hashes (
     path text NOT NULL,
-    hash text NOT NULL,
+    hash blob NOT NULL,
     ignore integer DEFAULT 0 NOT NULL,
     size ineger NOT NULL,
     modified_date integer NOT NULL
@@ -53,7 +53,7 @@ def create_all_tabels(conn):
 
     sql_create_moved_table = """ CREATE TABLE IF NOT EXISTS moved (
     path text NOT NULL,
-    hash text NOT NULL,
+    hash blob NOT NULL,
     ignore integer DEFAULT 0 NOT NULL,
     size ineger NOT NULL,
     modified_date integer NOT NULL
