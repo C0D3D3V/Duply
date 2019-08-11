@@ -14,6 +14,8 @@ import utils.hasher as hasher
 
 
 def tests():
+    log("Duply starting...")
+
     userInput = "../"
 
     pathToScan = fh.normPath(userInput)
@@ -23,6 +25,8 @@ def tests():
     db.checkConsistence(listOfFiles, databasePath)
 
     hasher.indexFiles(listOfFiles, databasePath)
+
+    log("Duply finished!", 5)
 
 
 if __name__ == '__main__':

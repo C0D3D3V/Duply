@@ -13,7 +13,8 @@ def writeListToFile(list, filePrefix, nullsplit=True):
     Writes an List of paths to a temp file
     :param list: list of path stings
     :param filePrefix: the prefix of the tmep file
-    :returns: the path to the temp file
+    :param nullsplit: split entries with null Character or new line
+    :return: the path to the temp file
     """
     now = datetime.now()
     tempPrefix = filePrefix + now.strftime("%d_%m_%Y-%H_%M")
@@ -33,7 +34,7 @@ def normPath(pathSring):
     """
     Normalize path for the os
     :param pathString: the path to normalize
-    :returns: the normalized path or None
+    :return: the normalized path or None
     """
     if pathSring is not None:
         return os.path.normpath(pathSring)
